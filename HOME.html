@@ -265,7 +265,7 @@
 
         <!-- FOOTER -->
         <div class="bloomberg-footer">
-            © 2025 BLOOMBERG ENS® | YAHOO FINANCE DATA FEED | SYSTÈME OPÉRATIONNEL<br>
+            © 2025 BLOOMBERG ENS® | TWELVE DATA API | SYSTÈME OPÉRATIONNEL<br>
             DONNÉES DE MARCHÉ EN TEMPS RÉEL • REFRESH AUTO: 30s • TERMINAL VERSION 1.0
         </div>
     </div>
@@ -273,18 +273,19 @@
     <script>
         // Configuration des 10 principaux indices boursiers
         const indices = [
-            { symbol: '^GSPC', name: 'S&P 500', fullName: 'Standard & Poor\'s 500' },
-            { symbol: '^DJI', name: 'DOW JONES', fullName: 'Dow Jones Industrial Average' },
-            { symbol: '^IXIC', name: 'NASDAQ', fullName: 'NASDAQ Composite' },
-            { symbol: '^FTSE', name: 'FTSE 100', fullName: 'Financial Times Stock Exchange 100' },
-            { symbol: '^GDAXI', name: 'DAX', fullName: 'Deutscher Aktienindex' },
-            { symbol: '^FCHI', name: 'CAC 40', fullName: 'Cotation Assistée en Continu' },
-            { symbol: '^N225', name: 'NIKKEI 225', fullName: 'Nikkei Stock Average' },
-            { symbol: '000001.SS', name: 'SSE COMPOSITE', fullName: 'Shanghai Stock Exchange' },
-            { symbol: '^HSI', name: 'HANG SENG', fullName: 'Hang Seng Index' },
-            { symbol: '^STOXX50E', name: 'EURO STOXX 50', fullName: 'Euro Stoxx 50 Index' }
+            { symbol: 'SPX', name: 'S&P 500', fullName: 'Standard & Poor\'s 500' },
+            { symbol: 'DJI', name: 'DOW JONES', fullName: 'Dow Jones Industrial Average' },
+            { symbol: 'IXIC', name: 'NASDAQ', fullName: 'NASDAQ Composite' },
+            { symbol: 'FTSE', name: 'FTSE 100', fullName: 'Financial Times Stock Exchange 100' },
+            { symbol: 'DAX', name: 'DAX', fullName: 'Deutscher Aktienindex' },
+            { symbol: 'CAC', name: 'CAC 40', fullName: 'Cotation Assistée en Continu' },
+            { symbol: 'N225', name: 'NIKKEI 225', fullName: 'Nikkei Stock Average' },
+            { symbol: 'SSEC', name: 'SSE COMPOSITE', fullName: 'Shanghai Stock Exchange' },
+            { symbol: 'HSI', name: 'HANG SENG', fullName: 'Hang Seng Index' },
+            { symbol: 'STOXX50E', name: 'EURO STOXX 50', fullName: 'Euro Stoxx 50 Index' }
         ];
 
+        const TWELVE_DATA_API_KEY = '8750c8bd8f14484abb8ab814daabbb56';
         let updateInterval;
 
         // Mise à jour de l'heure
@@ -294,40 +295,45 @@
             document.getElementById('current-time').textContent = timeString;
         }
 
-        // Récupération des données Yahoo Finance
+        // Récupération des données Twelve Data API
         async function fetchIndicesData() {
             try {
-                const symbols = indices.map(idx => idx.symbol).join(',');
+                const results = [];
                 
-                // Essayer plusieurs méthodes
-                const urls = [
-                    `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`,
-                    `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`
-                ];
-                
-                for (const url of urls) {
+                // Récupérer les données pour chaque indice
+                for (const index of indices) {
                     try {
-                        const response = await fetch(url, {
-                            method: 'GET',
-                            headers: {
-                                'Accept': 'application/json',
-                            }
-                        });
+                        const url = `https://api.twelvedata.com/quote?symbol=${index.symbol}&apikey=${TWELVE_DATA_API_KEY}`;
+                        const response = await fetch(url);
                         
                         if (response.ok) {
                             const data = await response.json();
-                            console.log('Données reçues:', data);
-                            if (data.quoteResponse && data.quoteResponse.result) {
-                                return data.quoteResponse.result;
+                            console.log(`Données ${index.symbol}:`, data);
+                            
+                            if (data.price) {
+                                const price = parseFloat(data.price);
+                                const change = parseFloat(data.change);
+                                const changePercent = parseFloat(data.percent_change);
+                                
+                                results.push({
+                                    symbol: index.symbol,
+                                    shortName: index.name,
+                                    regularMarketPrice: price,
+                                    regularMarketChange: change,
+                                    regularMarketChangePercent: changePercent
+                                });
                             }
                         }
+                        
+                        // Petit délai pour éviter de dépasser les limites de l'API
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        
                     } catch (e) {
-                        console.log('Tentative suivante...', e);
-                        continue;
+                        console.error(`Erreur pour ${index.symbol}:`, e);
                     }
                 }
                 
-                throw new Error('Toutes les tentatives ont échoué');
+                return results.length > 0 ? results : null;
             } catch (error) {
                 console.error('Erreur finale:', error);
                 return null;
