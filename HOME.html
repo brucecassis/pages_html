@@ -244,17 +244,17 @@
     <!-- HEADER BLOOMBERG -->
     <div class="bloomberg-header">
         <div class="header-left">
-            <div>⬛ BLOOMBERG ENS® TERMINAL - GLOBAL INDICES</div>
+            <div>⬛ BLOOMBERG ENS® TERMINAL - CRYPTO MARKETS</div>
         </div>
         <div class="header-time">
             <span class="status-indicator"></span>
-            <span id="current-time">--:--:--</span> UTC • AUTO-REFRESH: 30s
+            <span id="current-time">--:--:--</span> UTC • AUTO-REFRESH: 60s
         </div>
     </div>
 
     <!-- CONTAINER PRINCIPAL -->
     <div class="container">
-        <div class="section-title">📊 GLOBAL INDICES - LIVE MARKET DATA</div>
+        <div class="section-title">₿ TOP 10 CRYPTOMONNAIES - LIVE MARKET DATA</div>
         
         <div id="loading" class="loading">CHARGEMENT DES DONNÉES DE MARCHÉ EN COURS...</div>
         <div id="error" class="error" style="display: none;"></div>
@@ -265,27 +265,26 @@
 
         <!-- FOOTER -->
         <div class="bloomberg-footer">
-            © 2025 BLOOMBERG ENS® | TWELVE DATA API | SYSTÈME OPÉRATIONNEL<br>
-            DONNÉES DE MARCHÉ EN TEMPS RÉEL • REFRESH AUTO: 30s • TERMINAL VERSION 1.0
+            © 2025 BLOOMBERG ENS® | COINGECKO API | SYSTÈME OPÉRATIONNEL<br>
+            DONNÉES CRYPTO EN TEMPS RÉEL • REFRESH AUTO: 60s • TERMINAL VERSION 1.0
         </div>
     </div>
 
     <script>
-        // Configuration des 10 principaux indices boursiers
-        const indices = [
-            { symbol: 'SPX', name: 'S&P 500', fullName: 'Standard & Poor\'s 500' },
-            { symbol: 'DJI', name: 'DOW JONES', fullName: 'Dow Jones Industrial Average' },
-            { symbol: 'IXIC', name: 'NASDAQ', fullName: 'NASDAQ Composite' },
-            { symbol: 'FTSE', name: 'FTSE 100', fullName: 'Financial Times Stock Exchange 100' },
-            { symbol: 'DAX', name: 'DAX', fullName: 'Deutscher Aktienindex' },
-            { symbol: 'CAC', name: 'CAC 40', fullName: 'Cotation Assistée en Continu' },
-            { symbol: 'N225', name: 'NIKKEI 225', fullName: 'Nikkei Stock Average' },
-            { symbol: 'SSEC', name: 'SSE COMPOSITE', fullName: 'Shanghai Stock Exchange' },
-            { symbol: 'HSI', name: 'HANG SENG', fullName: 'Hang Seng Index' },
-            { symbol: 'STOXX50E', name: 'EURO STOXX 50', fullName: 'Euro Stoxx 50 Index' }
+        // Configuration des 10 principales cryptomonnaies
+        const cryptos = [
+            { id: 'bitcoin', symbol: 'BTC', name: 'BITCOIN', fullName: 'Bitcoin' },
+            { id: 'ethereum', symbol: 'ETH', name: 'ETHEREUM', fullName: 'Ethereum' },
+            { id: 'tether', symbol: 'USDT', name: 'TETHER', fullName: 'Tether USD' },
+            { id: 'binancecoin', symbol: 'BNB', name: 'BNB', fullName: 'Binance Coin' },
+            { id: 'solana', symbol: 'SOL', name: 'SOLANA', fullName: 'Solana' },
+            { id: 'ripple', symbol: 'XRP', name: 'XRP', fullName: 'Ripple' },
+            { id: 'usd-coin', symbol: 'USDC', name: 'USD COIN', fullName: 'USD Coin' },
+            { id: 'cardano', symbol: 'ADA', name: 'CARDANO', fullName: 'Cardano' },
+            { id: 'dogecoin', symbol: 'DOGE', name: 'DOGECOIN', fullName: 'Dogecoin' },
+            { id: 'avalanche-2', symbol: 'AVAX', name: 'AVALANCHE', fullName: 'Avalanche' }
         ];
 
-        const TWELVE_DATA_API_KEY = '8750c8bd8f14484abb8ab814daabbb56';
         let updateInterval;
 
         // Mise à jour de l'heure
@@ -295,47 +294,49 @@
             document.getElementById('current-time').textContent = timeString;
         }
 
-        // Récupération des données Twelve Data API
-        async function fetchIndicesData() {
+        // Récupération des données CoinGecko (API gratuite, pas de clé nécessaire)
+        async function fetchCryptoData() {
             try {
-                const results = [];
+                const ids = cryptos.map(c => c.id).join(',');
+                const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
                 
-                // Récupérer les données pour chaque indice
-                for (const index of indices) {
-                    try {
-                        const url = `https://api.twelvedata.com/quote?symbol=${index.symbol}&apikey=${TWELVE_DATA_API_KEY}`;
-                        const response = await fetch(url);
+                console.log('Appel CoinGecko:', url);
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Erreur API: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Données CoinGecko reçues:', data);
+                
+                // Transformer les données au format attendu
+                const results = [];
+                for (const crypto of cryptos) {
+                    if (data[crypto.id]) {
+                        const price = data[crypto.id].usd;
+                        const change24h = data[crypto.id].usd_24h_change;
+                        const change = price * (change24h / 100);
                         
-                        if (response.ok) {
-                            const data = await response.json();
-                            console.log(`Données ${index.symbol}:`, data);
-                            
-                            if (data.price) {
-                                const price = parseFloat(data.price);
-                                const change = parseFloat(data.change);
-                                const changePercent = parseFloat(data.percent_change);
-                                
-                                results.push({
-                                    symbol: index.symbol,
-                                    shortName: index.name,
-                                    regularMarketPrice: price,
-                                    regularMarketChange: change,
-                                    regularMarketChangePercent: changePercent
-                                });
-                            }
-                        }
-                        
-                        // Petit délai pour éviter de dépasser les limites de l'API
-                        await new Promise(resolve => setTimeout(resolve, 100));
-                        
-                    } catch (e) {
-                        console.error(`Erreur pour ${index.symbol}:`, e);
+                        results.push({
+                            symbol: crypto.symbol,
+                            shortName: crypto.name,
+                            regularMarketPrice: price,
+                            regularMarketChange: change,
+                            regularMarketChangePercent: change24h
+                        });
                     }
                 }
                 
                 return results.length > 0 ? results : null;
             } catch (error) {
-                console.error('Erreur finale:', error);
+                console.error('Erreur CoinGecko:', error);
                 return null;
             }
         }
@@ -343,17 +344,31 @@
         // Formatage des nombres
         function formatNumber(num) {
             if (num === undefined || num === null) return 'N/A';
-            return num.toLocaleString('fr-FR', { 
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2 
-            });
+            
+            // Pour les cryptos, adapter le format selon le prix
+            if (num >= 100) {
+                return num.toLocaleString('fr-FR', { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                });
+            } else if (num >= 1) {
+                return num.toLocaleString('fr-FR', { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 4 
+                });
+            } else {
+                return num.toLocaleString('fr-FR', { 
+                    minimumFractionDigits: 4, 
+                    maximumFractionDigits: 6 
+                });
+            }
         }
 
         // Formatage des changements
         function formatChange(change, changePercent) {
             if (change === undefined || changePercent === undefined) return 'N/A';
             const sign = change >= 0 ? '+' : '';
-            return `${sign}${formatNumber(change)} (${sign}${changePercent.toFixed(2)}%)`;
+            return `${sign}${formatNumber(Math.abs(change))} (${sign}${changePercent.toFixed(2)}%)`;
         }
 
         // Classe CSS selon le changement
@@ -362,7 +377,7 @@
             return change > 0 ? 'positive' : change < 0 ? 'negative' : 'neutral';
         }
 
-        // Affichage des indices
+        // Affichage des cryptos
         function displayIndices(data) {
             const container = document.getElementById('indices-container');
             const loading = document.getElementById('loading');
@@ -371,7 +386,7 @@
 
             if (!data || data.length === 0) {
                 loading.style.display = 'none';
-                errorDiv.textContent = '❌ ERREUR: IMPOSSIBLE DE CHARGER LES DONNÉES DE MARCHÉ • VÉRIFIER LA CONNEXION';
+                errorDiv.textContent = '❌ ERREUR: IMPOSSIBLE DE CHARGER LES DONNÉES • VÉRIFIER LA CONNEXION INTERNET';
                 errorDiv.style.display = 'block';
                 return;
             }
@@ -383,16 +398,16 @@
 
             container.innerHTML = '';
 
-            // Créer une carte pour chaque indice
+            // Créer une carte pour chaque crypto
             data.forEach((quote) => {
-                const indexInfo = indices.find(idx => idx.symbol === quote.symbol) || {};
+                const cryptoInfo = cryptos.find(c => c.symbol === quote.symbol) || {};
                 
                 const card = document.createElement('div');
                 card.className = 'index-card';
                 card.innerHTML = `
-                    <div class="index-name">${indexInfo.name || quote.shortName}</div>
-                    <div class="index-full-name">${indexInfo.fullName || ''}</div>
-                    <div class="index-price">${formatNumber(quote.regularMarketPrice)}</div>
+                    <div class="index-name">${cryptoInfo.name || quote.shortName}</div>
+                    <div class="index-full-name">${cryptoInfo.fullName || ''}</div>
+                    <div class="index-price">$${formatNumber(quote.regularMarketPrice)}</div>
                     <div class="index-change ${getChangeClass(quote.regularMarketChange)}">
                         ${formatChange(quote.regularMarketChange, quote.regularMarketChangePercent)}
                     </div>
@@ -418,7 +433,7 @@
             const container = document.getElementById('indices-container');
             container.classList.add('updating');
             
-            const data = await fetchIndicesData();
+            const data = await fetchCryptoData();
             displayIndices(data);
             
             setTimeout(() => {
@@ -433,8 +448,8 @@
             
             await updateData();
             
-            // Mise à jour automatique toutes les 30 secondes
-            updateInterval = setInterval(updateData, 30000);
+            // Mise à jour automatique toutes les 60 secondes
+            updateInterval = setInterval(updateData, 60000);
         }
 
         // Lancer l'application au chargement de la page
