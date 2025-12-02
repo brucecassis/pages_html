@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Terminal — Indices Live</title>
+  <style>
+    /* Thème "terminal sombre" (inspiré des dashboards pro) */
+    :root{
+      --bg:#0b0d10;
+      --panel:#0f1114;
+      --muted:#9aa3ad;
+      --good:#2ecc71;
+      --bad:#ff6b6b;
+      --accent:#00b3ff;
+      --glass: rgba(255,255,255,0.03);
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#050607 0%,var(--bg) 100%);font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    .wrap{max-width:1100px;margin:28px auto;padding:18px;border-radius:12px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 8px 30px rgba(0,0,0,0.6);}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    .logo{width:56px;height:56px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#0af);display:flex;align-items:center;justify-content:center;color:#021;font-weight:700;font-family:var(--mono);box-shadow:0 6px 18px rgba(0,0,0,0.6)}
+    h1{color:#e6eef6;font-size:20px;margin:0}
+    .sub{color:var(--muted);font-size:13px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+    .card{background:var(--panel);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 4px 18px rgba(0,0,0,0.6);min-height:82px;display:flex;flex-direction:column;justify-content:space-between}
+    .title{display:flex;justify-content:space-between;align-items:center}
+    .name{color:#cfe7ff;font-weight:600}
+    .price{font-family:var(--mono);font-size:22px;color:#e9f6ff;margin-top:6px}
+    .delta{font-family:var(--mono);font-size:14px;padding:4px 8px;border-radius:999px;font-weight:600}
+    .muted{color:var(--muted);font-size:12px}
+    footer{margin-top:14px;color:var(--muted);font-size:12px;display:flex;justify-content:space-between;align-items:center}
+    .small {font-size:11px;color:var(--muted)}
+    .spark{height:28px;width:100%;opacity:0.6}
+    .symbol {color:var(--muted);font-family:var(--mono);font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">TD</div>
+      <div>
+        <h1>Indices — Live quotes</h1>
+        <div class="sub">Données via Twelve Data — actualisation automatique toutes les 10s</div>
+      </div>
+    </header>
+
+    <div id="grid" class="grid">
+      <!-- Les cartes seront insérées ici par JS -->
+    </div>
+
+    <footer>
+      <div class="small">Source: Twelve Data — free API (remplace la clé dans le script)</div>
+      <div class="small">Mise à jour automatique</div>
+    </footer>
+  </div>
+
+  <script>
+  /******************************************************************
+   * CONFIG
+   *  - REMPLACEZ YOUR_API_KEY par votre clé Twelve Data
+   *  - Modifiez symbols[] si vous voulez d'autres indices
+   ******************************************************************/
+  const API_KEY = "YOUR_API_KEY"; // <-- remplace par ta clé Twelve Data
+  // mapping: display name, symbol (ajuste si Twelve Data a un autre symbole)
+  const symbols = [
+    {name: "S&P 500", symbol: "SPX"},        // si problème, essayer ^GSPC ou SPX
+    {name: "Dow Jones", symbol: "DJI"},
+    {name: "Nasdaq Composite", symbol: "IXIC"},
+    {name: "FTSE 100", symbol: "FTSE"},
+    {name: "DAX", symbol: "DAX"},
+    {name: "CAC 40", symbol: "CAC40"},
+    {name: "Nikkei 225", symbol: "JP225"},
+    {name: "Hang Seng", symbol: "HSI"},
+    {name: "Shanghai Comp.", symbol: "SSEC"},
+    {name: "ASX 200", symbol: "ASX200"}
+  ];
+
+  // Poll interval (ms)
+  const POLL_MS = 10000;
+
+  // Build UI
+  const grid = document.getElementById('grid');
+  const cards = {};
+
+  symbols.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="title">
+        <div>
+          <div class="name">${s.name}</div>
+          <div class="symbol">${s.symbol}</div>
+        </div>
+        <div id="delta-${s.symbol}" class="delta">—</div>
+      </div>
+      <div>
+        <div id="price-${s.symbol}" class="price">—</div>
+        <div id="time-${s.symbol}" class="muted">—</div>
+      </div>
+    `;
+    grid.appendChild(card);
+    cards[s.symbol] = {card, name:s.name};
+  });
+
+  // Helper: format numbers
+  function fmt(n){
+    if(n===null || n===undefined) return '—';
+    return Number(n).toLocaleString(undefined, {maximumFractionDigits:2});
+  }
+
+  // Fetch prices for a comma-separated list using Twelve Data
+  async function fetchPrices(symbolList){
+    // endpoint: https://api.twelvedata.com/price?symbol=...&apikey=...
+    const url = `https://api.twelvedata.com/price?symbol=${encodeURIComponent(symbolList)}&apikey=${API_KEY}`;
+    try{
+      const res = await fetch(url);
+      const data = await res.json();
+      return data;
+    }catch(e){
+      console.error('fetchPrices error', e);
+      return null;
+    }
+  }
+
+  // Update UI from response (supports single object or multiple)
+  function updateFromResponse(resp){
+    if(!resp) return;
+    // When multiple symbols requested, Twelve Data may return an object with symbol keys.
+    // Otherwise it returns a single object {symbol:...,price:...}
+    if(Array.isArray(resp)){
+      resp.forEach(item => applyItem(item));
+    }else if(resp && resp.symbol && resp.price){
+      applyItem(resp);
+    }else{
+      // possible object with keys per symbol
+      for(const key in resp){
+        if(resp[key] && typeof resp[key] === 'object' && resp[key].price){
+          applyItem(resp[key]);
+        }
+      }
+    }
+  }
+
+  function applyItem(item){
+    // item example: {symbol:"SPX", price:"4500", ...}
+    const sym = item.symbol;
+    const price = item.price || item.close || null;
+    const percent = item.percent_change || item.percent || null;
+    const datetime = item.datetime || item.timestamp || new Date().toISOString();
+
+    const priceEl = document.getElementById(`price-${sym}`);
+    const deltaEl = document.getElementById(`delta-${sym}`);
+    const timeEl = document.getElementById(`time-${sym}`);
+
+    if(priceEl) priceEl.textContent = fmt(price);
+    if(timeEl) timeEl.textContent = new Date().toLocaleTimeString();
+
+    if(deltaEl){
+      // Try to compute delta if we have previous price stored
+      const prev = deltaEl.dataset.prevPrice ? Number(deltaEl.dataset.prevPrice) : null;
+      if(prev && price){
+        const diff = Number(price) - prev;
+        const pct = (diff / prev) * 100;
+        deltaEl.textContent = `${diff >= 0 ? '+' : ''}${fmt(diff)} (${diff===0? '0.00%' : pct.toFixed(2)+'%'})`;
+        deltaEl.style.background = diff >= 0 ? 'rgba(46,204,113,0.12)' : 'rgba(255,107,107,0.12)';
+        deltaEl.style.color = diff >= 0 ? 'var(--good)' : 'var(--bad)';
+      } else {
+        deltaEl.textContent = '—';
+        deltaEl.style.background = 'transparent';
+        deltaEl.style.color = 'var(--muted)';
+      }
+      if(price) deltaEl.dataset.prevPrice = price;
+    }
+  }
+
+  // Main polling loop
+  async function poll(){
+    // make bulk requests in groups (Twelve Data supports bulk but free plans limit rate)
+    const chunkSize = 5; // chunk to avoid long URL / rate limits
+    for(let i=0;i<symbols.length;i+=chunkSize){
+      const chunk = symbols.slice(i,i+chunkSize).map(s => s.symbol).join(',');
+      const resp = await fetchPrices(chunk);
+      // resp may be {symbol:...} or object keyed
+      updateFromResponse(resp);
+    }
+  }
+
+  // initial + periodic
+  poll();
+  setInterval(poll, POLL_MS);
+
+  // Quick fallback: allow user to click a card to force refresh single symbol
+  Object.keys(cards).forEach(sym => {
+    const el = document.getElementById(`price-${sym}`);
+    if(el){
+      el.style.cursor = 'pointer';
+      el.title = 'Cliquer pour rafraîchir';
+      el.addEventListener('click', async () => {
+        const resp = await fetchPrices(sym);
+        updateFromResponse(resp);
+      });
+    }
+  });
+
+  </script>
+</body>
+</html>
+
