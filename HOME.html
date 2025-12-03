@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLOOMBERG ENS® - INDICES TERMINAL</title>
+    <title>BLOOMBERG ENS® - CRYPTO TERMINAL</title>
     <style>
         * {
             margin: 0;
@@ -17,7 +17,8 @@
             color: #FFAA00;
             font-size: 12px;
             padding: 0;
-            overflow-x: hidden;
+            overflow: hidden; /* SUPPRESSION SCROLL BAR */
+            height: 100vh;
         }
 
         /* HEADER BLOOMBERG */
@@ -31,7 +32,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0;
         }
 
         .header-left {
@@ -44,14 +44,147 @@
             font-size: 12px;
         }
 
+        /* BARRE DE FONCTION BLOOMBERG */
+        .function-bar {
+            background: #1a1a1a;
+            padding: 8px 20px;
+            display: flex;
+            gap: 15px;
+            border-bottom: 1px solid #333;
+            flex-wrap: wrap;
+        }
+
+        .function-btn {
+            background: #000;
+            color: #FFAA00;
+            border: 1px solid #FFAA00;
+            padding: 5px 12px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+
+        .function-btn:hover {
+            background: #FFAA00;
+            color: #000;
+        }
+
+        .function-btn.active {
+            background: #FFAA00;
+            color: #000;
+        }
+
         /* CONTAINER PRINCIPAL */
         .container {
             background: #000000;
             padding: 15px 20px;
-            min-height: 100vh;
+            height: calc(100vh - 120px);
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
-        /* TITRE SECTION */
+        /* Masquer scrollbar mais garder fonctionnalité */
+        .container::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        /* NEWS TICKER */
+        .news-ticker {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            padding: 8px 0;
+            overflow: hidden;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .news-ticker-content {
+            display: flex;
+            animation: scroll-news 60s linear infinite;
+            white-space: nowrap;
+        }
+
+        .news-item {
+            color: #FFAA00;
+            padding: 0 40px;
+            font-size: 11px;
+        }
+
+        .news-item::before {
+            content: "⬛ ";
+            color: #FF6600;
+        }
+
+        @keyframes scroll-news {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* TIMEFRAME SELECTOR */
+        .timeframe-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+        }
+
+        .timeframe-btn {
+            background: #000;
+            color: #888;
+            border: 1px solid #333;
+            padding: 6px 14px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timeframe-btn:hover {
+            color: #FFAA00;
+            border-color: #FFAA00;
+        }
+
+        .timeframe-btn.active {
+            background: #FFAA00;
+            color: #000;
+            border-color: #FFAA00;
+            font-weight: bold;
+        }
+
+        /* MARKET STATS BAR */
+        .market-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-left: 3px solid #FFAA00;
+            padding: 10px 15px;
+        }
+
+        .stat-label {
+            font-size: 9px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            color: #FFAA00;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        /* SECTION TITLE */
         .section-title {
             color: #FFAA00;
             font-weight: bold;
@@ -61,17 +194,76 @@
             margin: 15px 0 10px 0;
             border-bottom: 1px solid #333;
             padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* VIEW TOGGLE */
+        .view-toggle {
+            display: flex;
+            gap: 5px;
+        }
+
+        .view-btn {
+            background: #000;
+            color: #888;
+            border: 1px solid #333;
+            padding: 3px 8px;
+            font-size: 9px;
+            cursor: pointer;
+        }
+
+        .view-btn.active {
+            background: #FFAA00;
+            color: #000;
         }
 
         /* GRILLE DES INDICES */
         .indices-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 12px;
             margin-bottom: 20px;
         }
 
-        /* CARTE INDICE - STYLE BLOOMBERG */
+        /* HEAT MAP VIEW */
+        .heatmap-view {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .heatmap-cell {
+            aspect-ratio: 1.5;
+            border: 1px solid #333;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 170, 0, 0.3);
+        }
+
+        .heatmap-symbol {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .heatmap-change {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* CARTE INDICE AMÉLIORÉE */
         .index-card {
             background: #111111;
             border: 1px solid #333333;
@@ -79,6 +271,7 @@
             padding: 12px 15px;
             transition: all 0.2s ease;
             position: relative;
+            cursor: pointer;
         }
 
         .index-card:hover {
@@ -87,13 +280,42 @@
             box-shadow: 0 0 10px rgba(255, 170, 0, 0.2);
         }
 
+        .index-card.selected {
+            border: 2px solid #FFAA00;
+            background: #1a1a0a;
+        }
+
+        .index-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
         .index-name {
             font-size: 11px;
             font-weight: bold;
             color: #FFAA00;
-            margin-bottom: 3px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+        }
+
+        .favorite-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0;
+            transition: all 0.2s;
+        }
+
+        .favorite-btn:hover {
+            color: #FFAA00;
+        }
+
+        .favorite-btn.active {
+            color: #FFD700;
         }
 
         .index-full-name {
@@ -109,6 +331,29 @@
             color: #FFAA00;
             margin: 8px 0;
             font-family: 'Courier New', monospace;
+        }
+
+        .index-metrics {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 9px;
+            color: #888;
+        }
+
+        .metric {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .metric-label {
+            color: #666;
+        }
+
+        .metric-value {
+            color: #FFAA00;
+            font-weight: bold;
         }
 
         .index-change {
@@ -134,6 +379,56 @@
         .neutral {
             color: #888;
             border-color: #666;
+        }
+
+        /* SPARKLINE */
+        .sparkline {
+            height: 30px;
+            margin: 8px 0;
+        }
+
+        /* ALERT BADGE */
+        .alert-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #FF0000;
+            color: #fff;
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 2px;
+            animation: blink-alert 1s infinite;
+        }
+
+        @keyframes blink-alert {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* COMPARISON PANEL */
+        .comparison-panel {
+            display: none;
+            background: #0a0a0a;
+            border: 2px solid #FFAA00;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .comparison-panel.active {
+            display: block;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .comparison-item {
+            background: #111;
+            border: 1px solid #333;
+            padding: 15px;
         }
 
         /* LOADING STATE */
@@ -169,36 +464,6 @@
             font-size: 11px;
         }
 
-        /* LAST UPDATE */
-        .last-update {
-            text-align: center;
-            color: #666;
-            margin-top: 20px;
-            font-size: 10px;
-            padding: 10px;
-            border-top: 1px solid #333;
-        }
-
-        /* FOOTER BLOOMBERG */
-        .bloomberg-footer {
-            text-align: center;
-            color: #666;
-            font-size: 9px;
-            padding: 15px;
-            border-top: 1px solid #333;
-            margin-top: 30px;
-        }
-
-        /* ANIMATION UPDATE */
-        .updating {
-            animation: pulse 1.5s ease-in-out;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-
         /* STATUS INDICATOR */
         .status-indicator {
             display: inline-block;
@@ -215,6 +480,26 @@
             50% { opacity: 0.3; }
         }
 
+        /* LAST UPDATE */
+        .last-update {
+            text-align: center;
+            color: #666;
+            margin-top: 20px;
+            font-size: 10px;
+            padding: 10px;
+            border-top: 1px solid #333;
+        }
+
+        /* FOOTER */
+        .bloomberg-footer {
+            text-align: center;
+            color: #666;
+            font-size: 9px;
+            padding: 15px;
+            border-top: 1px solid #333;
+            margin-top: 30px;
+        }
+
         /* SEPARATOR */
         hr {
             border: none;
@@ -225,17 +510,15 @@
         /* RESPONSIVE */
         @media (max-width: 768px) {
             .indices-grid {
-                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-                gap: 10px;
+                grid-template-columns: 1fr;
             }
             
-            .index-price {
-                font-size: 18px;
+            .function-bar {
+                overflow-x: auto;
             }
             
-            .bloomberg-header {
-                font-size: 12px;
-                padding: 6px 15px;
+            .market-stats {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -252,26 +535,92 @@
         </div>
     </div>
 
+    <!-- BARRE DE FONCTION -->
+    <div class="function-bar">
+        <button class="function-btn active" onclick="changeView('grid')">F1: GRID</button>
+        <button class="function-btn" onclick="changeView('heatmap')">F2: HEATMAP</button>
+        <button class="function-btn" onclick="toggleComparison()">F3: COMPARE</button>
+        <button class="function-btn" onclick="showWatchlist()">F4: WATCHLIST</button>
+        <button class="function-btn" onclick="filterView('favorites')">F5: FAVORITES</button>
+        <button class="function-btn" onclick="sortBy('change')">F6: SORT ▼</button>
+        <button class="function-btn" onclick="toggleAlerts()">F7: ALERTS</button>
+        <button class="function-btn" onclick="refreshData()">F9: REFRESH</button>
+    </div>
+
     <!-- CONTAINER PRINCIPAL -->
     <div class="container">
-        <div class="section-title">₿ TOP 10 CRYPTOMONNAIES - LIVE MARKET DATA</div>
+        <!-- NEWS TICKER -->
+        <div class="news-ticker">
+            <div class="news-ticker-content" id="news-ticker">
+                <span class="news-item">BTC franchit la barre des $100K • Volume record sur les marchés crypto</span>
+                <span class="news-item">ETH prépare la mise à jour Dencun • Adoption institutionnelle en hausse</span>
+                <span class="news-item">Régulation crypto: nouvelles directives de la SEC attendues</span>
+                <span class="news-item">Solana: performances réseau optimisées, TPS record atteint</span>
+                <span class="news-item">XRP: bataille judiciaire avec la SEC proche de sa conclusion</span>
+                <span class="news-item">Marchés DeFi: TVL en croissance de 45% sur le trimestre</span>
+            </div>
+        </div>
+
+        <!-- MARKET STATS -->
+        <div class="market-stats">
+            <div class="stat-card">
+                <div class="stat-label">Total Market Cap</div>
+                <div class="stat-value" id="total-mcap">--</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">24h Volume</div>
+                <div class="stat-value" id="total-volume">--</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">BTC Dominance</div>
+                <div class="stat-value" id="btc-dominance">--</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Cryptocurrencies</div>
+                <div class="stat-value">15,000+</div>
+            </div>
+        </div>
+
+        <!-- TIMEFRAME SELECTOR -->
+        <div class="timeframe-selector">
+            <span style="color: #888; margin-right: 10px;">PÉRIODE:</span>
+            <button class="timeframe-btn" onclick="changeTimeframe('1h')">1H</button>
+            <button class="timeframe-btn active" onclick="changeTimeframe('24h')">24H</button>
+            <button class="timeframe-btn" onclick="changeTimeframe('7d')">7D</button>
+            <button class="timeframe-btn" onclick="changeTimeframe('30d')">30D</button>
+            <button class="timeframe-btn" onclick="changeTimeframe('1y')">1Y</button>
+        </div>
+
+        <!-- COMPARISON PANEL -->
+        <div class="comparison-panel" id="comparison-panel">
+            <div class="section-title">⚡ MODE COMPARAISON - SÉLECTIONNEZ DES CRYPTOS À COMPARER</div>
+            <div class="comparison-grid" id="comparison-grid"></div>
+        </div>
+
+        <div class="section-title">
+            <span>₿ TOP CRYPTOMONNAIES - LIVE MARKET DATA</span>
+            <div class="view-toggle">
+                <button class="view-btn active" onclick="changeView('grid')">GRID</button>
+                <button class="view-btn" onclick="changeView('heatmap')">HEAT</button>
+            </div>
+        </div>
         
         <div id="loading" class="loading">CHARGEMENT DES DONNÉES DE MARCHÉ EN COURS...</div>
         <div id="error" class="error" style="display: none;"></div>
         <div id="indices-container" class="indices-grid" style="display: none;"></div>
+        <div id="heatmap-container" class="heatmap-view"></div>
         <div id="last-update" class="last-update" style="display: none;"></div>
 
         <hr>
 
-        <!-- FOOTER -->
         <div class="bloomberg-footer">
             © 2025 BLOOMBERG ENS® | COINGECKO API | SYSTÈME OPÉRATIONNEL<br>
-            DONNÉES CRYPTO EN TEMPS RÉEL • REFRESH AUTO: 60s • TERMINAL VERSION 1.0
+            DONNÉES CRYPTO EN TEMPS RÉEL • AUTO-REFRESH: 60s • TERMINAL v2.0 ENHANCED
         </div>
     </div>
 
     <script>
-        // Configuration des 10 principales cryptomonnaies
+        // Configuration
         const cryptos = [
             { id: 'bitcoin', symbol: 'BTC', name: 'BITCOIN', fullName: 'Bitcoin' },
             { id: 'ethereum', symbol: 'ETH', name: 'ETHEREUM', fullName: 'Ethereum' },
@@ -282,11 +631,15 @@
             { id: 'usd-coin', symbol: 'USDC', name: 'USD COIN', fullName: 'USD Coin' },
             { id: 'cardano', symbol: 'ADA', name: 'CARDANO', fullName: 'Cardano' },
             { id: 'dogecoin', symbol: 'DOGE', name: 'DOGECOIN', fullName: 'Dogecoin' },
-            { id: 'ondo', symbol: 'ONDO', name: 'ONDO', fullName: 'Ondo' },
             { id: 'avalanche-2', symbol: 'AVAX', name: 'AVALANCHE', fullName: 'Avalanche' }
         ];
 
         let updateInterval;
+        let currentData = [];
+        let selectedCryptos = [];
+        let favorites = JSON.parse(localStorage.getItem('crypto-favorites') || '[]');
+        let currentView = 'grid';
+        let comparisonMode = false;
 
         // Mise à jour de l'heure
         function updateClock() {
@@ -295,45 +648,53 @@
             document.getElementById('current-time').textContent = timeString;
         }
 
-        // Récupération des données CoinGecko (API gratuite, pas de clé nécessaire)
+        // Récupération des données CoinGecko
         async function fetchCryptoData() {
             try {
                 const ids = cryptos.map(c => c.id).join(',');
-                const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
-                
-                console.log('Appel CoinGecko:', url);
+                const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`;
                 
                 const response = await fetch(url, {
                     method: 'GET',
-                    headers: {
-                        'Accept': 'application/json'
-                    }
+                    headers: { 'Accept': 'application/json' }
                 });
                 
-                if (!response.ok) {
-                    throw new Error(`Erreur API: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
 
                 const data = await response.json();
-                console.log('Données CoinGecko reçues:', data);
                 
-                // Transformer les données au format attendu
                 const results = [];
+                let totalMcap = 0;
+                let totalVolume = 0;
+                
                 for (const crypto of cryptos) {
                     if (data[crypto.id]) {
                         const price = data[crypto.id].usd;
-                        const change24h = data[crypto.id].usd_24h_change;
+                        const change24h = data[crypto.id].usd_24h_change || 0;
                         const change = price * (change24h / 100);
+                        const mcap = data[crypto.id].usd_market_cap || 0;
+                        const volume = data[crypto.id].usd_24h_vol || 0;
+                        
+                        totalMcap += mcap;
+                        totalVolume += volume;
                         
                         results.push({
+                            id: crypto.id,
                             symbol: crypto.symbol,
                             shortName: crypto.name,
+                            fullName: crypto.fullName,
                             regularMarketPrice: price,
                             regularMarketChange: change,
-                            regularMarketChangePercent: change24h
+                            regularMarketChangePercent: change24h,
+                            marketCap: mcap,
+                            volume24h: volume,
+                            isFavorite: favorites.includes(crypto.symbol)
                         });
                     }
                 }
+                
+                // Mettre à jour les stats globales
+                updateMarketStats(totalMcap, totalVolume);
                 
                 return results.length > 0 ? results : null;
             } catch (error) {
@@ -342,11 +703,28 @@
             }
         }
 
+        // Mise à jour des stats globales
+        function updateMarketStats(mcap, volume) {
+            const btcData = currentData.find(c => c.symbol === 'BTC');
+            const btcDom = btcData ? ((btcData.marketCap / mcap) * 100).toFixed(2) : '--';
+            
+            document.getElementById('total-mcap').textContent = `$${formatLargeNumber(mcap)}`;
+            document.getElementById('total-volume').textContent = `$${formatLargeNumber(volume)}`;
+            document.getElementById('btc-dominance').textContent = `${btcDom}%`;
+        }
+
+        // Formatage des grands nombres
+        function formatLargeNumber(num) {
+            if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            return num.toFixed(2);
+        }
+
         // Formatage des nombres
         function formatNumber(num) {
             if (num === undefined || num === null) return 'N/A';
             
-            // Pour les cryptos, adapter le format selon le prix
             if (num >= 100) {
                 return num.toLocaleString('fr-FR', { 
                     minimumFractionDigits: 2, 
@@ -365,58 +743,187 @@
             }
         }
 
-        // Formatage des changements
         function formatChange(change, changePercent) {
             if (change === undefined || changePercent === undefined) return 'N/A';
             const sign = change >= 0 ? '+' : '';
             return `${sign}${formatNumber(Math.abs(change))} (${sign}${changePercent.toFixed(2)}%)`;
         }
 
-        // Classe CSS selon le changement
         function getChangeClass(change) {
             if (change === undefined || change === null) return 'neutral';
             return change > 0 ? 'positive' : change < 0 ? 'negative' : 'neutral';
         }
 
-        // Affichage des cryptos
-        function displayIndices(data) {
-            const container = document.getElementById('indices-container');
-            const loading = document.getElementById('loading');
-            const errorDiv = document.getElementById('error');
-            const lastUpdate = document.getElementById('last-update');
-
-            if (!data || data.length === 0) {
-                loading.style.display = 'none';
-                errorDiv.textContent = '❌ ERREUR: IMPOSSIBLE DE CHARGER LES DONNÉES • VÉRIFIER LA CONNEXION INTERNET';
-                errorDiv.style.display = 'block';
-                return;
+        // Génération de couleur pour heatmap
+        function getHeatmapColor(changePercent) {
+            if (changePercent > 0) {
+                const intensity = Math.min(changePercent / 10, 1);
+                const green = Math.floor(100 + intensity * 155);
+                return `rgb(0, ${green}, 0)`;
+            } else {
+                const intensity = Math.min(Math.abs(changePercent) / 10, 1);
+                const red = Math.floor(100 + intensity * 155);
+                return `rgb(${red}, 0, 0)`;
             }
+        }
 
-            loading.style.display = 'none';
-            errorDiv.style.display = 'none';
-            container.style.display = 'grid';
-            lastUpdate.style.display = 'block';
+        // Toggle favori
+        function toggleFavorite(symbol, event) {
+            event.stopPropagation();
+            const index = favorites.indexOf(symbol);
+            if (index > -1) {
+                favorites.splice(index, 1);
+            } else {
+                favorites.push(symbol);
+            }
+            localStorage.setItem('crypto-favorites', JSON.stringify(favorites));
+            updateData();
+        }
 
+        // Sélection pour comparaison
+        function selectForComparison(symbol, event) {
+            if (!comparisonMode) return;
+            event.stopPropagation();
+            
+            const index = selectedCryptos.indexOf(symbol);
+            if (index > -1) {
+                selectedCryptos.splice(index, 1);
+            } else {
+                if (selectedCryptos.length < 4) {
+                    selectedCryptos.push(symbol);
+                }
+            }
+            updateData();
+            updateComparisonPanel();
+        }
+
+        // Affichage Grid
+        function displayGrid(data) {
+            const container = document.getElementById('indices-container');
             container.innerHTML = '';
 
-            // Créer une carte pour chaque crypto
             data.forEach((quote) => {
-                const cryptoInfo = cryptos.find(c => c.symbol === quote.symbol) || {};
+                const hasAlert = Math.abs(quote.regularMarketChangePercent) > 10;
+                const isSelected = selectedCryptos.includes(quote.symbol);
                 
                 const card = document.createElement('div');
-                card.className = 'index-card';
+                card.className = `index-card ${isSelected ? 'selected' : ''}`;
+                card.onclick = (e) => selectForComparison(quote.symbol, e);
+                
                 card.innerHTML = `
-                    <div class="index-name">${cryptoInfo.name || quote.shortName}</div>
-                    <div class="index-full-name">${cryptoInfo.fullName || ''}</div>
+                    ${hasAlert ? '<div class="alert-badge">⚠ ALERT</div>' : ''}
+                    <div class="index-header">
+                        <div>
+                            <div class="index-name">${quote.shortName}</div>
+                            <div class="index-full-name">${quote.fullName}</div>
+                        </div>
+                        <button class="favorite-btn ${quote.isFavorite ? 'active' : ''}" 
+                                onclick="toggleFavorite('${quote.symbol}', event)">
+                            ${quote.isFavorite ? '★' : '☆'}
+                        </button>
+                    </div>
                     <div class="index-price">$${formatNumber(quote.regularMarketPrice)}</div>
+                    <canvas class="sparkline" id="spark-${quote.symbol}"></canvas>
+                    <div class="index-metrics">
+                        <div class="metric">
+                            <span class="metric-label">MCap</span>
+                            <span class="metric-value">$${formatLargeNumber(quote.marketCap)}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Vol 24h</span>
+                            <span class="metric-value">$${formatLargeNumber(quote.volume24h)}</span>
+                        </div>
+                    </div>
                     <div class="index-change ${getChangeClass(quote.regularMarketChange)}">
                         ${formatChange(quote.regularMarketChange, quote.regularMarketChangePercent)}
                     </div>
                 `;
                 container.appendChild(card);
+                
+                // Dessiner sparkline
+                setTimeout(() => drawSparkline(quote.symbol, quote.regularMarketChangePercent), 100);
             });
+        }
 
-            // Afficher l'heure de dernière mise à jour
+        // Affichage Heatmap
+        function displayHeatmap(data) {
+            const container = document.getElementById('heatmap-container');
+            container.innerHTML = '';
+
+            data.forEach((quote) => {
+                const cell = document.createElement('div');
+                cell.className = 'heatmap-cell';
+                cell.style.background = getHeatmapColor(quote.regularMarketChangePercent);
+                cell.innerHTML = `
+                    <div class="heatmap-symbol">${quote.symbol}</div>
+                    <div class="heatmap-change">${quote.regularMarketChangePercent.toFixed(2)}%</div>
+                `;
+                container.appendChild(cell);
+            });
+        }
+
+        // Dessiner sparkline
+        function drawSparkline(symbol, changePercent) {
+            const canvas = document.getElementById(`spark-${symbol}`);
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 30;
+            
+            // Générer des données factices basées sur le changement
+            const points = 20;
+            const data = [];
+            for (let i = 0; i < points; i++) {
+                const variance = (Math.random() - 0.5) * 2;
+                data.push(50 + (changePercent / 2) + variance);
+            }
+            
+            ctx.strokeStyle = changePercent >= 0 ? '#00FF00' : '#FF0000';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            
+            const xStep = canvas.width / (points - 1);
+            data.forEach((value, i) => {
+                const x = i * xStep;
+                const y = canvas.height - ((value + 50) / 100 * canvas.height);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            
+            ctx.stroke();
+        }
+
+        // Affichage des données
+        function displayIndices(data) {
+            const loading = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const container = document.getElementById('indices-container');
+            const heatmapContainer = document.getElementById('heatmap-container');
+            const lastUpdate = document.getElementById('last-update');
+
+            if (!data || data.length === 0) {
+                loading.style.display = 'none';
+                errorDiv.textContent = '❌ ERREUR: IMPOSSIBLE DE CHARGER LES DONNÉES';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            currentData = data;
+            loading.style.display = 'none';
+            errorDiv.style.display = 'none';
+            lastUpdate.style.display = 'block';
+
+            if (currentView === 'grid') {
+                container.style.display = 'grid';
+                heatmapContainer.style.display = 'none';
+                displayGrid(data);
+            } else {
+                container.style.display = 'none';
+                heatmapContainer.style.display = 'grid';
+                displayHeatmap(data);
+            }
+
             const now = new Date();
             lastUpdate.innerHTML = `
                 <span class="status-indicator"></span>
@@ -429,38 +936,107 @@
             `;
         }
 
+        // Panel de comparaison
+        function updateComparisonPanel() {
+            const panel = document.getElementById('comparison-panel');
+            const grid = document.getElementById('comparison-grid');
+            
+            if (selectedCryptos.length === 0) {
+                panel.classList.remove('active');
+                return;
+            }
+            
+            panel.classList.add('active');
+            grid.innerHTML = '';
+            
+            selectedCryptos.forEach(symbol => {
+                const crypto = currentData.find(c => c.symbol === symbol);
+                if (!crypto) return;
+                
+                const item = document.createElement('div');
+                item.className = 'comparison-item';
+                item.innerHTML = `
+                    <div style="font-weight: bold; color: #FFAA00; margin-bottom: 10px;">${crypto.shortName}</div>
+                    <div style="font-size: 18px; margin: 5px 0;">$${formatNumber(crypto.regularMarketPrice)}</div>
+                    <div class="${getChangeClass(crypto.regularMarketChange)}" style="margin: 5px 0;">
+                        ${formatChange(crypto.regularMarketChange, crypto.regularMarketChangePercent)}
+                    </div>
+                    <div style="font-size: 9px; color: #888; margin-top: 8px;">
+                        MCap: $${formatLargeNumber(crypto.marketCap)}<br>
+                        Vol: $${formatLargeNumber(crypto.volume24h)}
+                    </div>
+                `;
+                grid.appendChild(item);
+            });
+        }
+
+        // Fonctions UI
+        function changeView(view) {
+            currentView = view;
+            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.function-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            displayIndices(currentData);
+        }
+
+        function toggleComparison() {
+            comparisonMode = !comparisonMode;
+            if (!comparisonMode) {
+                selectedCryptos = [];
+                updateComparisonPanel();
+            }
+            displayIndices(currentData);
+        }
+
+        function changeTimeframe(period) {
+            document.querySelectorAll('.timeframe-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            // Ici vous pourriez charger des données historiques
+        }
+
+        function showWatchlist() {
+            alert('Fonctionnalité Watchlist à venir !');
+        }
+
+        function filterView(filter) {
+            if (filter === 'favorites') {
+                const filtered = currentData.filter(c => c.isFavorite);
+                displayIndices(filtered.length > 0 ? filtered : currentData);
+            }
+        }
+
+        function sortBy(criteria) {
+            if (criteria === 'change') {
+                currentData.sort((a, b) => b.regularMarketChangePercent - a.regularMarketChangePercent);
+                displayIndices(currentData);
+            }
+        }
+
+        function toggleAlerts() {
+            alert('Système d\'alertes: Configurez des seuils de prix personnalisés !');
+        }
+
+        function refreshData() {
+            updateData();
+        }
+
         // Mise à jour des données
         async function updateData() {
-            const container = document.getElementById('indices-container');
-            container.classList.add('updating');
-            
             const data = await fetchCryptoData();
             displayIndices(data);
-            
-            setTimeout(() => {
-                container.classList.remove('updating');
-            }, 500);
         }
 
         // Initialisation
         async function init() {
             updateClock();
             setInterval(updateClock, 1000);
-            
             await updateData();
-            
-            // Mise à jour automatique toutes les 60 secondes
             updateInterval = setInterval(updateData, 60000);
         }
 
-        // Lancer l'application au chargement de la page
         window.addEventListener('DOMContentLoaded', init);
-
-        // Nettoyer l'intervalle lors de la fermeture de la page
         window.addEventListener('beforeunload', () => {
-            if (updateInterval) {
-                clearInterval(updateInterval);
-            }
+            if (updateInterval) clearInterval(updateInterval);
         });
     </script>
 </body>
