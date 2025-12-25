@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLOOMBERG ENS® - LIVE TERMINAL</title>
+    <title>BLOOMBERG ENS® - PRO TERMINAL</title>
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         :root {
             --bg-color: #000000;
-            --panel-bg: #0a0a0a;
             --border: #333333;
-            --text-main: #ffaa00; /* Bloomberg Amber */
+            --text-main: #ffaa00;
             --text-dim: #666666;
             --up-color: #00ff00;
             --down-color: #ff0000;
@@ -18,124 +17,54 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
             font-family: var(--font-stack);
             font-size: 11px;
             height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            display: flex; flex-direction: column; overflow: hidden;
         }
 
-        /* --- HEADER & COMMAND --- */
-        .top-bar {
-            background: var(--text-main);
-            color: #000;
-            padding: 4px 10px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .cmd-line {
-            background: #111;
-            border-bottom: 1px solid var(--text-main);
-            padding: 5px 10px;
-            display: flex;
-            align-items: center;
-        }
-        .cmd-input {
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            font-family: inherit;
-            margin-left: 10px;
-            width: 300px;
-            text-transform: uppercase;
-            outline: none;
-        }
+        /* HEADER */
+        .top-bar { background: var(--text-main); color: #000; padding: 4px 10px; font-weight: bold; display: flex; justify-content: space-between; }
+        .cmd-line { background: #111; border-bottom: 1px solid var(--text-main); padding: 5px 10px; display: flex; align-items: center; }
+        .cmd-input { background: transparent; border: none; color: var(--text-main); font-family: inherit; margin-left: 10px; width: 300px; text-transform: uppercase; outline: none; font-weight: bold; }
 
-        /* --- LAYOUT GRID --- */
+        /* GRID */
         .grid-container {
             display: grid;
-            grid-template-columns: 280px 1fr 280px; /* Gauche - Centre - Droite */
-            grid-template-rows: 1fr 180px; /* Haut - Bas */
+            grid-template-columns: 280px 1fr 280px;
+            grid-template-rows: 1fr 180px;
             gap: 1px;
             background-color: var(--border);
             flex-grow: 1;
         }
 
-        .panel {
-            background-color: var(--bg-color);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+        .panel { background-color: var(--bg-color); display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .panel-header { background: #111; padding: 4px 8px; border-bottom: 1px solid var(--border); font-weight: bold; color: var(--text-dim); font-size: 10px; display: flex; justify-content: space-between; }
 
-        .panel-header {
-            background: #111;
-            padding: 3px 8px;
-            border-bottom: 1px solid var(--border);
-            font-weight: bold;
-            color: var(--text-dim);
-            font-size: 10px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        /* --- COMPONENTS --- */
-        
-        /* Order Book */
-        .order-book { overflow-y: hidden; flex-grow: 1; font-size: 10px; }
-        .ob-row { display: flex; justify-content: space-between; padding: 1px 8px; position: relative; }
+        /* TABLEAUX */
+        .order-book, .tape-list { overflow-y: hidden; flex-grow: 1; font-size: 10px; }
+        .ob-row, .trade-item { display: flex; justify-content: space-between; padding: 1px 8px; position: relative; }
         .ob-bg { position: absolute; top: 0; bottom: 0; right: 0; opacity: 0.2; z-index: 0; }
         .ob-ask .ob-bg { background: var(--down-color); }
         .ob-bid .ob-bg { background: var(--up-color); }
         .ob-val { z-index: 1; position: relative; }
-        .ask-text { color: var(--down-color); }
-        .bid-text { color: var(--up-color); }
+        .ask-text { color: var(--down-color); } .bid-text { color: var(--up-color); }
+        .trade-buy { color: var(--up-color); } .trade-sell { color: var(--down-color); }
 
-        /* Chart Container */
+        /* CHART */
         #chart-container { width: 100%; height: 100%; }
 
-        /* Ticker Tape */
-        .tape-list { overflow: hidden; }
-        .trade-item { 
-            display: flex; 
-            justify-content: space-between; 
-            padding: 2px 8px; 
-            border-bottom: 1px solid #111;
-        }
-        .trade-buy { color: var(--up-color); }
-        .trade-sell { color: var(--down-color); }
-
-        /* Stats Panel */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            padding: 10px;
-            gap: 15px;
-        }
+        /* STATS */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); padding: 10px; gap: 15px; }
         .stat-box { border: 1px solid var(--border); padding: 5px; }
         .stat-label { color: var(--text-dim); font-size: 9px; margin-bottom: 2px; }
-        .stat-value { font-size: 14px; font-weight: bold; }
+        .stat-value { font-size: 13px; font-weight: bold; }
 
-        /* Footer */
-        .footer {
-            background: #111;
-            padding: 4px 10px;
-            color: var(--text-dim);
-            font-size: 9px;
-            display: flex;
-            justify-content: space-between;
-            border-top: 1px solid var(--border);
-        }
-        .connection-status { color: var(--up-color); }
-
+        /* FOOTER */
+        .footer { background: #111; padding: 4px 10px; color: var(--text-dim); font-size: 9px; display: flex; justify-content: space-between; border-top: 1px solid var(--border); }
     </style>
 </head>
 <body>
@@ -146,20 +75,14 @@
     </div>
     <div class="cmd-line">
         <span>COMMAND ></span>
-        <input type="text" class="cmd-input" value="BTCUSDT" id="pair-input" placeholder="ENTER PAIR...">
-        <span style="color:var(--text-dim)">[PRESS ENTER TO LOAD]</span>
+        <input type="text" class="cmd-input" value="BTCUSDT" id="pair-input">
+        <span style="color:var(--text-dim)">[ENTER TO LOAD]</span>
     </div>
 
     <div class="grid-container">
-        
         <div class="panel" style="grid-row: span 2;">
-            <div class="panel-header">
-                <span>ORDER BOOK (DEPTH)</span>
-                <span>BTC/USDT</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; padding:4px 8px; color:var(--text-dim); font-size:9px;">
-                <span>PRICE</span><span>SIZE</span>
-            </div>
+            <div class="panel-header"><span>ORDER BOOK</span><span>DEPTH</span></div>
+            <div style="display:flex; justify-content:space-between; padding:4px 8px; color:var(--text-dim); font-size:9px;"><span>PRICE</span><span>SIZE</span></div>
             <div id="asks-container" class="order-book" style="border-bottom:1px solid var(--border);"></div>
             <div id="spread-display" style="text-align:center; padding:2px; color:var(--text-dim);">SPREAD: --</div>
             <div id="bids-container" class="order-book"></div>
@@ -167,227 +90,217 @@
 
         <div class="panel">
             <div class="panel-header">
-                <span>CHART: LIVE FEED (1M)</span>
-                <span id="current-price-header" style="font-size:12px; color: var(--text-main);">LOADING...</span>
+                <span>CHART (1M)</span>
+                <span id="price-display" style="color:var(--text-main)">LOADING...</span>
             </div>
             <div id="chart-container"></div>
         </div>
 
         <div class="panel" style="grid-row: span 2;">
-            <div class="panel-header">
-                <span>TAPE (REAL-TIME TRADES)</span>
-                <span>VOL</span>
-            </div>
-            <div id="tape-container" class="tape-list">
-                </div>
+            <div class="panel-header"><span>TAPE</span><span>TRADES</span></div>
+            <div id="tape-container" class="tape-list"></div>
         </div>
 
         <div class="panel">
-            <div class="panel-header">MARKET INTELLIGENCE</div>
+            <div class="panel-header">MARKET DATA (24H)</div>
             <div class="stats-grid">
                 <div class="stat-box">
-                    <div class="stat-label">FEAR & GREED</div>
-                    <div class="stat-value" id="fng-value">--</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">24H VOL (BTC)</div>
-                    <div class="stat-value" id="vol-value">--</div>
+                    <div class="stat-label">MARKET SENTIMENT</div>
+                    <div class="stat-value" id="fng-value">LOADING</div>
                 </div>
                 <div class="stat-box">
                     <div class="stat-label">24H HIGH</div>
                     <div class="stat-value" id="high-value">--</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-label">ETH GAS (EST)</div>
-                    <div class="stat-value" id="gas-value">~15 Gwei</div>
+                    <div class="stat-label">24H VOLUME</div>
+                    <div class="stat-value" id="vol-value">--</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">24H CHANGE</div>
+                    <div class="stat-value" id="change-value">--</div>
                 </div>
             </div>
         </div>
-
     </div>
 
     <div class="footer">
-        <div>SYSTEM STATUS: <span class="connection-status">● STREAMING DATA</span></div>
-        <div>DATA SOURCE: BINANCE PUBLIC API • ALTERNATIVE.ME</div>
+        <div>STATUS: <span style="color:#00ff00">● SYSTEM ONLINE</span></div>
+        <div>SOURCE: BINANCE STREAM • CRYPTOCOMPARE • ALTERNATIVE.ME</div>
     </div>
 
     <script>
-        // --- CONFIGURATION ---
         let currentPair = 'btcusdt';
         let ws = null;
         let chart, candleSeries;
 
-        // --- GESTION DES MESSAGES D'ETAT ---
-        function logStatus(msg, type = 'normal') {
-            const el = document.getElementById('current-price-header');
-            el.innerText = msg;
-            if(type === 'error') el.style.color = 'red';
-            else el.style.color = '#ffaa00';
-            console.log(msg);
-        }
+        // --- 1. SETUP UI & CHART ---
+        function updateClock() { document.getElementById('clock').innerText = new Date().toISOString().split('T')[1].split('.')[0] + ' UTC'; }
+        setInterval(updateClock, 1000); updateClock();
 
-        // --- 1. HORLOGE INDÉPENDANTE ---
-        function updateClock() {
-            const now = new Date();
-            const timeString = now.toISOString().split('T')[1].split('.')[0] + ' UTC';
-            document.getElementById('clock').innerText = timeString;
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-
-        // --- 2. INITIALISATION DU GRAPHIQUE ---
         function initChart() {
-            try {
-                const chartContainer = document.getElementById('chart-container');
-                chart = LightweightCharts.createChart(chartContainer, {
-                    layout: { background: { color: '#000000' }, textColor: '#ffaa00' },
-                    grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
-                    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-                    rightPriceScale: { borderColor: '#333', scaleMargins: { top: 0.1, bottom: 0.1 } },
-                    timeScale: { borderColor: '#333', timeVisible: true, secondsVisible: false },
-                });
+            const container = document.getElementById('chart-container');
+            chart = LightweightCharts.createChart(container, {
+                layout: { background: { color: '#000000' }, textColor: '#ffaa00' },
+                grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
+                crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+                rightPriceScale: { borderColor: '#333' },
+                timeScale: { borderColor: '#333', timeVisible: true, secondsVisible: false },
+            });
+            candleSeries = chart.addCandlestickSeries({
+                upColor: '#00ff00', downColor: '#ff0000', borderVisible: false, wickUpColor: '#00ff00', wickDownColor: '#ff0000'
+            });
+            new ResizeObserver(e => {
+                if(e.length) chart.applyOptions({ width: e[0].contentRect.width, height: e[0].contentRect.height });
+            }).observe(container);
+        }
 
-                candleSeries = chart.addCandlestickSeries({
-                    upColor: '#00ff00', downColor: '#ff0000',
-                    borderVisible: false, wickUpColor: '#00ff00', wickDownColor: '#ff0000',
-                });
+        // --- 2. HISTOIRE (CryptoCompare API - Anti-CORS) ---
+        async function fetchHistory(pair) {
+            try {
+                // On extrait le symbole (ex: btcusdt -> BTC)
+                const symbol = pair.toUpperCase().replace('USDT', '');
+                // Utilisation de l'API CryptoCompare qui est beaucoup plus permissive que Binance pour l'historique
+                const url = `https://min-api.cryptocompare.com/data/v2/histominute?fsym=${symbol}&tsym=USDT&limit=200`;
                 
-                new ResizeObserver(entries => {
-                    if (entries.length === 0 || entries[0].target !== chartContainer) return;
-                    const newRect = entries[0].contentRect;
-                    chart.applyOptions({ width: newRect.width, height: newRect.height });
-                }).observe(chartContainer);
+                const res = await fetch(url);
+                const json = await res.json();
+                
+                if (json.Response === 'Success') {
+                    const candles = json.Data.Data.map(d => ({
+                        time: d.time,
+                        open: d.open, high: d.high, low: d.low, close: d.close
+                    }));
+                    candleSeries.setData(candles);
+                    console.log("Historique chargé via CryptoCompare");
+                }
             } catch (e) {
-                logStatus("ERREUR CHART: " + e.message, 'error');
+                console.log("Erreur historique:", e);
             }
         }
 
-        // --- 3. CONNEXION WEBSOCKET (DIRECT) ---
+        // --- 3. LIVE DATA (Binance WebSocket) ---
         function connectWebSocket(pair) {
             if (ws) ws.close();
             
-            logStatus("CONNEXION STREAM...", 'normal');
+            // On s'abonne à 4 flux : Kline (Graph), Depth (Carnet), Trade (Tape), Ticker (Stats 24h)
+            const streams = [
+                `${pair}@kline_1m`,
+                `${pair}@depth20`,
+                `${pair}@trade`,
+                `${pair}@ticker`
+            ].join('/');
 
-            // Abonnement aux 3 flux en même temps
-            const streams = [`${pair}@kline_1m`, `${pair}@depth20`, `${pair}@trade`].join('/');
             ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
 
-            ws.onopen = () => {
-                logStatus("LIVE FEED ACTIF", 'normal');
-                document.querySelector('.connection-status').style.color = '#00ff00';
-            };
-            
-            ws.onerror = (e) => {
-                logStatus("ERREUR WEBSOCKET", 'error');
-            };
-
             ws.onmessage = (event) => {
-                const message = JSON.parse(event.data);
-                const data = message.data;
-                const type = message.stream.split('@')[1];
+                const msg = JSON.parse(event.data);
+                const type = msg.stream.split('@')[1];
+                const data = msg.data;
 
                 if (type === 'kline_1m') {
                     const k = data.k;
                     candleSeries.update({
                         time: k.t / 1000, open: parseFloat(k.o), high: parseFloat(k.h), low: parseFloat(k.l), close: parseFloat(k.c)
                     });
-                    document.getElementById('current-price-header').innerText = `${pair.toUpperCase()}: ${parseFloat(k.c).toFixed(2)}`;
-                    document.getElementById('vol-value').innerText = Math.floor(parseFloat(k.v));
-                    document.getElementById('high-value').innerText = parseFloat(k.h).toFixed(2);
+                    // Prix affiché en haut du graph
+                    document.getElementById('price-display').innerText = `${pair.toUpperCase()}: ${parseFloat(k.c).toFixed(2)}`;
                 }
-                if (type === 'depth20') handleDepth(data);
-                if (type === 'trade') handleTrade(data);
+
+                if (type === 'ticker') {
+                    // Mise à jour des Stats 24H (Vol, High, Change)
+                    document.getElementById('high-value').innerText = parseFloat(data.h).toFixed(2);
+                    document.getElementById('vol-value').innerText = parseFloat(data.v).toFixed(2) + ' ' + pair.replace('usdt','').toUpperCase();
+                    
+                    const change = parseFloat(data.P);
+                    const el = document.getElementById('change-value');
+                    el.innerText = change.toFixed(2) + '%';
+                    el.style.color = change >= 0 ? '#00ff00' : '#ff0000';
+                }
+
+                if (type === 'depth20') {
+                    updateDepth(data);
+                }
+
+                if (type === 'trade') {
+                    updateTape(data);
+                }
             };
         }
 
-        // Gestion du carnet d'ordres
-        function handleDepth(data) {
-            const asksContainer = document.getElementById('asks-container');
-            const bidsContainer = document.getElementById('bids-container');
-            asksContainer.innerHTML = ''; 
-            bidsContainer.innerHTML = '';
-
-            // Limite à 8 items pour la fluidité
-            data.asks.slice(0, 8).reverse().forEach(ask => asksContainer.appendChild(createOrderRow(ask, 'ob-ask')));
-            data.bids.slice(0, 8).forEach(bid => bidsContainer.appendChild(createOrderRow(bid, 'ob-bid')));
+        // --- 4. UI UPDATERS ---
+        function updateDepth(data) {
+            const asks = document.getElementById('asks-container');
+            const bids = document.getElementById('bids-container');
+            asks.innerHTML = ''; bids.innerHTML = '';
+            
+            data.asks.slice(0, 8).reverse().forEach(item => {
+                asks.appendChild(createRow(item[0], item[1], 'ob-ask'));
+            });
+            data.bids.slice(0, 8).forEach(item => {
+                bids.appendChild(createRow(item[0], item[1], 'ob-bid'));
+            });
             
             const spread = (parseFloat(data.asks[0][0]) - parseFloat(data.bids[0][0])).toFixed(2);
             document.getElementById('spread-display').innerText = `SPREAD: ${spread}`;
         }
 
-        function createOrderRow(item, type) {
-            const price = parseFloat(item[0]).toFixed(2);
-            const size = parseFloat(item[1]).toFixed(4);
-            const width = Math.min(size * 10, 100); // Visualisation graphique
-            const div = document.createElement('div');
-            div.className = `ob-row ${type}`;
-            div.innerHTML = `<div class="ob-bg" style="width:${width}%"></div><span class="ob-val ${type==='ob-ask'?'ask-text':'bid-text'}">${price}</span><span class="ob-val" style="color:#666">${size}</span>`;
-            return div;
-        }
-
-        // Gestion du Tape (Transactions)
-        function handleTrade(data) {
-            const container = document.getElementById('tape-container');
+        function updateTape(data) {
+            const tape = document.getElementById('tape-container');
             const row = document.createElement('div');
             row.className = 'trade-item';
-            row.innerHTML = `<span style="color:#555">${new Date(data.T).toLocaleTimeString()}</span><span class="${data.m ? 'trade-sell' : 'trade-buy'}">${parseFloat(data.p).toFixed(2)}</span><span style="color:#888">${parseFloat(data.q).toFixed(5)}</span>`;
-            container.prepend(row);
-            if (container.children.length > 25) container.lastChild.remove();
+            row.innerHTML = `
+                <span style="color:#555">${new Date(data.T).toLocaleTimeString()}</span>
+                <span class="${data.m ? 'trade-sell' : 'trade-buy'}">${parseFloat(data.p).toFixed(2)}</span>
+                <span style="color:#666">${parseFloat(data.q).toFixed(4)}</span>
+            `;
+            tape.prepend(row);
+            if (tape.children.length > 25) tape.lastChild.remove();
         }
 
-        // --- 4. CHARGEMENT HISTORIQUE (REST) ---
-        async function fetchHistory(pair) {
-            try {
-                // Tente de récupérer 200 bougies passées
-                const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${pair.toUpperCase()}&interval=1m&limit=200`);
-                if (!res.ok) throw new Error("API Rest Error");
-                const data = await res.json();
-                const candles = data.map(d => ({
-                    time: d[0] / 1000, open: parseFloat(d[1]), high: parseFloat(d[2]), low: parseFloat(d[3]), close: parseFloat(d[4])
-                }));
-                candleSeries.setData(candles);
-            } catch (e) {
-                console.log("Historique non disponible (CORS), le graphique se construira en temps réel.");
-            }
+        function createRow(price, size, type) {
+            const p = parseFloat(price).toFixed(2);
+            const s = parseFloat(size).toFixed(4);
+            const w = Math.min(s * 10, 100);
+            const d = document.createElement('div');
+            d.className = `ob-row ${type}`;
+            d.innerHTML = `<div class="ob-bg" style="width:${w}%"></div><span class="ob-val ${type==='ob-ask'?'ask-text':'bid-text'}">${p}</span><span class="ob-val" style="color:#666">${s}</span>`;
+            return d;
         }
 
-        async function fetchSentiment() {
+        // Sentiment
+        async function fetchStats() {
             try {
                 const res = await fetch('https://api.alternative.me/fng/');
-                const data = await res.json();
-                document.getElementById('fng-value').innerText = data.data[0].value;
+                const d = await res.json();
+                const val = d.data[0].value;
+                const el = document.getElementById('fng-value');
+                el.innerText = `${val}/100`;
+                el.style.color = val > 50 ? '#00ff00' : '#ff0000';
             } catch(e) {}
         }
 
-        // --- 5. DÉMARRAGE DE L'APPLICATION ---
-        
-        // A. On initialise le graphique
+        // --- START ---
         initChart();
-
-        // B. On lance le direct IMMÉDIATEMENT (Sans attendre l'historique)
-        connectWebSocket(currentPair);
+        fetchStats();
         
-        // C. On lance les tâches secondaires en parallèle
+        // Initial launch
         fetchHistory(currentPair);
-        fetchSentiment();
+        connectWebSocket(currentPair);
 
-        // D. Gestion de la barre de commande (Changement de paire)
+        // Input
         document.getElementById('pair-input').addEventListener('keypress', (e) => {
             if(e.key === 'Enter') {
                 const val = e.target.value.toLowerCase().trim();
                 if(val) {
                     currentPair = val;
-                    // Reset du graphique
-                    if(candleSeries) candleSeries.setData([]); 
-                    document.getElementById('current-price-header').innerText = "SWITCHING PAIR...";
-                    
-                    // Relance du système
+                    if(candleSeries) candleSeries.setData([]);
+                    document.getElementById('price-display').innerText = "LOADING...";
                     connectWebSocket(currentPair);
                     fetchHistory(currentPair);
                 }
             }
         });
-
     </script>
 </body>
 </html>
