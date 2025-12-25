@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLOOMBERG ENS® - TERMINAL</title>
+    <title>BLOOMBERG ENS® - LIVE TERMINAL</title>
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         :root {
@@ -17,31 +17,36 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', monospace; }
         body { background: var(--bg); color: var(--amber); height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-size: 11px; }
 
-        /* HEADER */
+        /* EN-TÊTE */
         .header { background: var(--amber); color: #000; padding: 4px 10px; font-weight: bold; display: flex; justify-content: space-between; }
         .cmd { background: #111; border-bottom: 1px solid var(--amber); padding: 5px; display: flex; align-items: center; }
         .cmd input { background: transparent; border: none; color: var(--amber); width: 200px; margin-left: 10px; text-transform: uppercase; outline: none; font-weight: bold; }
 
-        /* GRID LAYOUT */
+        /* GRILLE PRINCIPALE */
         .grid { display: grid; grid-template-columns: 280px 1fr 280px; grid-template-rows: 1fr 180px; gap: 1px; background: var(--border); flex-grow: 1; }
         .panel { background: var(--bg); display: flex; flex-direction: column; overflow: hidden; position: relative; }
         .title { background: #111; padding: 4px; border-bottom: 1px solid var(--border); color: var(--dim); font-weight: bold; display: flex; justify-content: space-between; }
         
-        /* DATA LISTS */
+        /* LISTES DE DONNÉES */
         .list { overflow: hidden; flex-grow: 1; }
         .row { display: flex; justify-content: space-between; padding: 1px 5px; }
         .g { color: var(--green); } .r { color: var(--red); }
 
-        /* CHART */
-        #chart { width: 100%; height: 100%; }
+        /* CONTENEUR GRAPHIQUE */
+        #chart { width: 100%; height: 100%; position: relative; }
+        /* Message d'attente au centre du graphique */
+        #chart-msg {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: #444; font-size: 14px; pointer-events: none; z-index: 10; text-align: center;
+        }
 
-        /* STATS BOXES */
+        /* BOITES DE STATS */
         .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px; }
         .box { border: 1px solid var(--border); padding: 5px; }
         .lbl { color: var(--dim); font-size: 9px; }
         .val { font-size: 13px; font-weight: bold; }
 
-        /* FOOTER */
+        /* PIED DE PAGE */
         .foot { background: #111; border-top: 1px solid #333; padding: 5px; color: var(--dim); display: flex; justify-content: space-between; }
     </style>
 </head>
@@ -62,17 +67,22 @@
         <div class="panel" style="grid-row: span 2;">
             <div class="title"><span>ORDER BOOK</span><span>DEPTH</span></div>
             <div class="list">
-                <div id="asks" style="display:flex; flex-direction:column-reverse;"></div> <div id="spread" style="text-align:center; color:#444; padding:2px;">---</div>
+                <div id="asks" style="display:flex; flex-direction:column-reverse;"></div>
+                <div id="spread" style="text-align:center; color:#444; padding:2px;">---</div>
                 <div id="bids"></div>
             </div>
         </div>
 
         <div class="panel">
             <div class="title">
-                <span>CHART (1M)</span>
-                <span id="price" style="color:var(--amber)">LOADING...</span>
+                <span>CHART (1M LIVE)</span>
+                <span id="price" style="color:var(--amber)">WAITING DATA...</span>
             </div>
-            <div id="chart"></div>
+            <div id="chart">
+                <div id="chart-msg">
+                    SYSTEM READY<br>WAITING FOR NEXT CANDLE...<br>(MAY TAKE ~30s)
+                </div>
+            </div>
         </div>
 
         <div class="panel" style="grid-row: span 2;">
@@ -92,12 +102,12 @@
     </div>
 
     <div class="foot">
-        <div id="status">● SYSTEM READY</div>
+        <div id="status">● INITIALIZING...</div>
         <div>BINANCE STREAM (WSS)</div>
     </div>
 
     <script>
-        // --- 1. CONFIG & UTILS ---
+        // --- 1. CONFIGURATION ---
         let ws = null;
         let chart, series;
         let currentPair = 'btcusdt';
@@ -105,36 +115,39 @@
         const el = (id) => document.getElementById(id);
         const log = (msg) => { el('status').innerText = "● " + msg; };
 
-        // Horloge
+        // Horloge UTC
         setInterval(() => {
             el('time').innerText = new Date().toISOString().split('T')[1].split('.')[0] + ' UTC';
         }, 1000);
 
-        // --- 2. CHART SETUP ---
+        // --- 2. CONFIGURATION DU GRAPHIQUE ---
         function initChart() {
             const container = el('chart');
+            // Création du graphique avec fond noir strict
             chart = LightweightCharts.createChart(container, {
                 layout: { background: { color: '#000000' }, textColor: '#ffaa00' },
-                grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
+                grid: { vertLines: { color: '#1a1a1a' }, horzLines: { color: '#1a1a1a' } },
                 crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
                 rightPriceScale: { borderColor: '#333' },
-                timeScale: { borderColor: '#333', timeVisible: true }
-            });
-            series = chart.addCandlestickSeries({
-                upColor: '#00ff00', downColor: '#ff0000', borderVisible: false, wickUpColor: '#00ff00', wickDownColor: '#ff0000'
+                timeScale: { borderColor: '#333', timeVisible: true, secondsVisible: false }
             });
             
+            series = chart.addCandlestickSeries({
+                upColor: '#00ff00', downColor: '#ff0000', 
+                borderVisible: false, wickUpColor: '#00ff00', wickDownColor: '#ff0000'
+            });
+            
+            // Redimensionnement automatique
             new ResizeObserver(entries => {
                 if (entries.length) chart.applyOptions({ width: entries[0].contentRect.width, height: entries[0].contentRect.height });
             }).observe(container);
         }
 
-        // --- 3. WEBSOCKET LOGIC (LE COEUR DU SYSTEME) ---
+        // --- 3. CONNEXION WEBSOCKET ---
         function startStream(pair) {
             if (ws) ws.close();
-            log("CONNECTING...");
+            log("CONNECTING TO BINANCE...");
 
-            // On s'abonne à tout d'un coup : Graphique + Profondeur + Trades + Stats 24h
             const streams = [
                 `${pair}@kline_1m`,
                 `${pair}@depth10`,
@@ -144,24 +157,45 @@
 
             ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
 
-            ws.onopen = () => { log("STREAM ACTIVE"); el('status').style.color = "#00ff00"; };
-            ws.onerror = () => { log("CONNECTION ERROR"); el('status').style.color = "red"; };
+            ws.onopen = () => { 
+                log("SYSTEM ONLINE - STREAMING"); 
+                el('status').style.color = "#00ff00"; 
+            };
+            
+            ws.onerror = () => { 
+                log("CONNECTION ERROR"); 
+                el('status').style.color = "red"; 
+            };
 
             ws.onmessage = (evt) => {
                 const msg = JSON.parse(evt.data);
                 const type = msg.stream.split('@')[1];
                 const data = msg.data;
 
-                // A. Graphique & Prix
+                // A. MISE A JOUR DU GRAPHIQUE
                 if (type === 'kline_1m') {
                     const k = data.k;
-                    series.update({
-                        time: k.t / 1000, open: parseFloat(k.o), high: parseFloat(k.h), low: parseFloat(k.l), close: parseFloat(k.c)
-                    });
-                    el('price').innerText = `${pair.toUpperCase()} : ${parseFloat(k.c).toFixed(2)}`;
+                    // CORRECTION CRUCIALE : Conversion du temps en entier (secondes)
+                    // Sans Math.floor, le graphique rejette la donnée et reste noir.
+                    const candle = {
+                        time: Math.floor(k.t / 1000), 
+                        open: parseFloat(k.o),
+                        high: parseFloat(k.h),
+                        low: parseFloat(k.l),
+                        close: parseFloat(k.c)
+                    };
+                    
+                    try {
+                        series.update(candle);
+                        // On cache le message d'attente dès qu'on a une donnée
+                        el('chart-msg').style.display = 'none'; 
+                        el('price').innerText = `${pair.toUpperCase()} : ${parseFloat(k.c).toFixed(2)}`;
+                    } catch (e) {
+                        console.log("Chart Update Pending...");
+                    }
                 }
 
-                // B. Stats 24H (C'est ça qui manquait !)
+                // B. STATISTIQUES 24H
                 if (type === 'ticker') {
                     el('high').innerText = parseFloat(data.h).toFixed(2);
                     el('low').innerText = parseFloat(data.l).toFixed(2);
@@ -170,40 +204,34 @@
                     el('chg').innerHTML = `<span class="${chg >= 0 ? 'g' : 'r'}">${chg.toFixed(2)}%</span>`;
                 }
 
-                // C. Carnet d'ordres
+                // C. CARNET D'ORDRES (DEPTH)
                 if (type === 'depth10') {
-                    renderBook(data.asks, el('asks'), 'r', true); // Vendeurs
-                    renderBook(data.bids, el('bids'), 'g', false); // Acheteurs
-                    // Spread simple
-                    const bestAsk = parseFloat(data.asks[0][0]);
-                    const bestBid = parseFloat(data.bids[0][0]);
-                    el('spread').innerText = (bestAsk - bestBid).toFixed(2);
+                    renderBook(data.asks, el('asks'), 'r', true);
+                    renderBook(data.bids, el('bids'), 'g', false);
+                    el('spread').innerText = (parseFloat(data.asks[0][0]) - parseFloat(data.bids[0][0])).toFixed(2);
                 }
 
-                // D. Tape (Trades)
+                // D. TAPE (TRANSACTIONS)
                 if (type === 'trade') {
                     const row = document.createElement('div');
                     row.className = 'row';
                     row.innerHTML = `
                         <span style="color:#555">${new Date(data.T).toLocaleTimeString().split(' ')[0]}</span>
                         <span class="${data.m ? 'r' : 'g'}">${parseFloat(data.p).toFixed(2)}</span>
-                        <span style="color:#666">${parseFloat(data.q).toFixed(4)}</span>
+                        <span style="color:#666">${parseFloat(data.q).toFixed(5)}</span>
                     `;
                     const tape = el('tape');
                     tape.prepend(row);
-                    if (tape.children.length > 20) tape.lastChild.remove();
+                    if (tape.children.length > 25) tape.lastChild.remove();
                 }
             };
         }
 
-        // Helper pour afficher le carnet
+        // Fonction utilitaire pour afficher le carnet d'ordres
         function renderBook(list, container, colorClass, reverse) {
             container.innerHTML = '';
-            // On prend juste 5 lignes pour la performance
             const sliced = list.slice(0, 8); 
-            // Si c'est les Asks (vendeurs), on inverse l'ordre pour avoir le prix le plus bas en bas
             const dataToRender = reverse ? sliced.reverse() : sliced;
-            
             dataToRender.forEach(item => {
                 const row = document.createElement('div');
                 row.className = 'row';
@@ -212,26 +240,23 @@
             });
         }
 
-        // --- 4. STARTUP ---
-        
-        // On initialise le graphique vide
+        // --- 4. DÉMARRAGE ---
         try {
             initChart();
+            startStream(currentPair);
         } catch(e) {
-            console.error("Erreur Graphique", e);
+            console.error("Init Error", e);
         }
 
-        // On lance le flux
-        startStream(currentPair);
-
-        // Gestion Input
+        // Gestion de la barre de commande
         el('pair').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 const val = e.target.value.toLowerCase().trim();
                 if (val) {
                     currentPair = val;
-                    if (series) series.setData([]); // Reset graph
-                    el('price').innerText = "SWITCHING...";
+                    series.setData([]); // On vide le graphique
+                    el('chart-msg').style.display = 'block'; // On remet le message d'attente
+                    el('price').innerText = "LOADING...";
                     startStream(currentPair);
                 }
             }
