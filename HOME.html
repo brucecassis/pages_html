@@ -64,7 +64,7 @@
             grid-template-columns: 280px 1fr 280px; /* Gauche - Centre - Droite */
             grid-template-rows: 1fr 180px; /* Haut - Bas */
             gap: 1px;
-            background-color: var(--border); /* Crée les bordures entre les panels */
+            background-color: var(--border);
             flex-grow: 1;
         }
 
@@ -102,7 +102,7 @@
         /* Chart Container */
         #chart-container { width: 100%; height: 100%; }
 
-        /* Ticker Tape (Trades) */
+        /* Ticker Tape */
         .tape-list { overflow: hidden; }
         .trade-item { 
             display: flex; 
@@ -135,10 +135,6 @@
             border-top: 1px solid var(--border);
         }
         .connection-status { color: var(--up-color); }
-
-        /* Blinking effect */
-        @keyframes flash { 0% { background: #333; } 100% { background: transparent; } }
-        .flash { animation: flash 0.5s; }
 
     </style>
 </head>
@@ -221,7 +217,7 @@
         let ws = null;
         let chart, candleSeries;
 
-        // --- GESTION DES ERREURS VISUELLES ---
+        // --- GESTION DES MESSAGES D'ETAT ---
         function logStatus(msg, type = 'normal') {
             const el = document.getElementById('current-price-header');
             el.innerText = msg;
@@ -230,17 +226,16 @@
             console.log(msg);
         }
 
-        // --- 1. HORLOGE (Indépendante) ---
+        // --- 1. HORLOGE INDÉPENDANTE ---
         function updateClock() {
             const now = new Date();
             const timeString = now.toISOString().split('T')[1].split('.')[0] + ' UTC';
             document.getElementById('clock').innerText = timeString;
         }
-        // On lance l'horloge tout de suite, sans attendre les données
         setInterval(updateClock, 1000);
         updateClock();
 
-        // --- 2. INITIALISATION CHART ---
+        // --- 2. INITIALISATION DU GRAPHIQUE ---
         function initChart() {
             try {
                 const chartContainer = document.getElementById('chart-container');
@@ -267,22 +262,23 @@
             }
         }
 
-        // --- 3. WEBSOCKET (Données en direct) ---
+        // --- 3. CONNEXION WEBSOCKET (DIRECT) ---
         function connectWebSocket(pair) {
             if (ws) ws.close();
             
-            logStatus("CONNEXION BINANCE...", 'normal');
+            logStatus("CONNEXION STREAM...", 'normal');
 
+            // Abonnement aux 3 flux en même temps
             const streams = [`${pair}@kline_1m`, `${pair}@depth20`, `${pair}@trade`].join('/');
             ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
 
             ws.onopen = () => {
-                logStatus("CONNEXION ÉTABLIE - FLUX EN DIRECT", 'normal');
+                logStatus("LIVE FEED ACTIF", 'normal');
                 document.querySelector('.connection-status').style.color = '#00ff00';
             };
             
             ws.onerror = (e) => {
-                logStatus("ERREUR WEBSOCKET (BLOQUÉ?)", 'error');
+                logStatus("ERREUR WEBSOCKET", 'error');
             };
 
             ws.onmessage = (event) => {
@@ -295,7 +291,7 @@
                     candleSeries.update({
                         time: k.t / 1000, open: parseFloat(k.o), high: parseFloat(k.h), low: parseFloat(k.l), close: parseFloat(k.c)
                     });
-                    document.getElementById('current-price-header').innerText = `BTC/USDT: ${parseFloat(k.c).toFixed(2)}`;
+                    document.getElementById('current-price-header').innerText = `${pair.toUpperCase()}: ${parseFloat(k.c).toFixed(2)}`;
                     document.getElementById('vol-value').innerText = Math.floor(parseFloat(k.v));
                     document.getElementById('high-value').innerText = parseFloat(k.h).toFixed(2);
                 }
@@ -304,13 +300,14 @@
             };
         }
 
+        // Gestion du carnet d'ordres
         function handleDepth(data) {
             const asksContainer = document.getElementById('asks-container');
             const bidsContainer = document.getElementById('bids-container');
             asksContainer.innerHTML = ''; 
             bidsContainer.innerHTML = '';
 
-            // On affiche seulement les 8 premiers pour éviter de surcharger le DOM si ça lag
+            // Limite à 8 items pour la fluidité
             data.asks.slice(0, 8).reverse().forEach(ask => asksContainer.appendChild(createOrderRow(ask, 'ob-ask')));
             data.bids.slice(0, 8).forEach(bid => bidsContainer.appendChild(createOrderRow(bid, 'ob-bid')));
             
@@ -321,13 +318,14 @@
         function createOrderRow(item, type) {
             const price = parseFloat(item[0]).toFixed(2);
             const size = parseFloat(item[1]).toFixed(4);
-            const width = Math.min(size * 10, 100);
+            const width = Math.min(size * 10, 100); // Visualisation graphique
             const div = document.createElement('div');
             div.className = `ob-row ${type}`;
             div.innerHTML = `<div class="ob-bg" style="width:${width}%"></div><span class="ob-val ${type==='ob-ask'?'ask-text':'bid-text'}">${price}</span><span class="ob-val" style="color:#666">${size}</span>`;
             return div;
         }
 
+        // Gestion du Tape (Transactions)
         function handleTrade(data) {
             const container = document.getElementById('tape-container');
             const row = document.createElement('div');
@@ -337,33 +335,59 @@
             if (container.children.length > 25) container.lastChild.remove();
         }
 
-        // --- 4. DATA INITIALE (REST API) ---
+        // --- 4. CHARGEMENT HISTORIQUE (REST) ---
         async function fetchHistory(pair) {
             try {
-                // On essaie de récupérer l'historique
+                // Tente de récupérer 200 bougies passées
                 const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${pair.toUpperCase()}&interval=1m&limit=200`);
-                if (!res.ok) throw new Error("API Limit/Error");
+                if (!res.ok) throw new Error("API Rest Error");
                 const data = await res.json();
                 const candles = data.map(d => ({
                     time: d[0] / 1000, open: parseFloat(d[1]), high: parseFloat(d[2]), low: parseFloat(d[3]), close: parseFloat(d[4])
                 }));
                 candleSeries.setData(candles);
             } catch (e) {
-                console.log("Impossible de charger l'historique (CORS probable), passage au WebSocket direct.");
-                // Pas grave, le websocket va remplir le graph petit à petit
+                console.log("Historique non disponible (CORS), le graphique se construira en temps réel.");
             }
         }
 
-        // --- START ---
-        initChart();
-        fetchHistory(currentPair).then(() => connectWebSocket(currentPair));
+        async function fetchSentiment() {
+            try {
+                const res = await fetch('https://api.alternative.me/fng/');
+                const data = await res.json();
+                document.getElementById('fng-value').innerText = data.data[0].value;
+            } catch(e) {}
+        }
+
+        // --- 5. DÉMARRAGE DE L'APPLICATION ---
         
-        // Commande Input
+        // A. On initialise le graphique
+        initChart();
+
+        // B. On lance le direct IMMÉDIATEMENT (Sans attendre l'historique)
+        connectWebSocket(currentPair);
+        
+        // C. On lance les tâches secondaires en parallèle
+        fetchHistory(currentPair);
+        fetchSentiment();
+
+        // D. Gestion de la barre de commande (Changement de paire)
         document.getElementById('pair-input').addEventListener('keypress', (e) => {
             if(e.key === 'Enter') {
-                currentPair = e.target.value.toLowerCase().trim();
-                connectWebSocket(currentPair);
-                fetchHistory(currentPair);
+                const val = e.target.value.toLowerCase().trim();
+                if(val) {
+                    currentPair = val;
+                    // Reset du graphique
+                    if(candleSeries) candleSeries.setData([]); 
+                    document.getElementById('current-price-header').innerText = "SWITCHING PAIR...";
+                    
+                    // Relance du système
+                    connectWebSocket(currentPair);
+                    fetchHistory(currentPair);
+                }
             }
         });
+
     </script>
+</body>
+</html>
