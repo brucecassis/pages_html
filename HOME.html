@@ -3,97 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLOOMBERG ENS® - GOD MODE v10</title>
+    <title>BLOOMBERG ENS® - DEFI WARROOM v11</title>
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
-        :root { --bg: #050505; --amber: #ffaa00; --dim: #555; --green: #00ff41; --red: #ff3333; --liq: #00d9ff; --border: #222; --panel-bg: #0a0a0a; --purple: #9d00ff; }
+        :root { 
+            --bg: #050505; --amber: #ffaa00; --dim: #555; --green: #00ff41; --red: #ff3333; 
+            --liq: #00d9ff; --border: #222; --panel-bg: #0a0a0a; --purple: #9d00ff; --blue: #2962ff;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Consolas', 'Monaco', monospace; user-select: none; }
         body { background: var(--bg); color: var(--amber); height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-size: 11px; }
         
-        /* SCROLLBARS */
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
-        ::-webkit-scrollbar-track { background: #000; }
-
-        /* ANIMATIONS & UTILS */
+        /* UTILS */
         .hidden { display: none !important; }
-        @keyframes flash { 0% { background-color: #333; } 100% { background-color: transparent; } }
-        .flash-up { animation: flash 0.3s; color: var(--green); }
-        .flash-down { animation: flash 0.3s; color: var(--red); }
-        .pop-toast { animation: slideIn 0.5s ease-out forwards; }
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-thumb { background: #333; }
         .blink { animation: blinker 1s linear infinite; }
         @keyframes blinker { 50% { opacity: 0; } }
+        .flash-red { animation: flashR 0.2s; } @keyframes flashR { 0% { background: var(--red); color:#000; } }
 
-        /* LAYOUT ELEMENTS */
-        .ticker-wrap { width: 100%; overflow: hidden; background: #080808; border-bottom: 1px solid #333; white-space: nowrap; padding: 2px 0; font-size: 10px; }
+        /* LAYOUT MAIN */
+        .ticker-wrap { background: #080808; border-bottom: 1px solid #333; padding: 2px 0; font-size: 10px; white-space: nowrap; overflow: hidden; }
         .ticker { display: inline-block; animation: ticker 60s linear infinite; }
         @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-        .tick-item { margin-right: 20px; cursor: pointer; color: #666; transition: color 0.2s; }
-        .tick-item:hover { color: var(--amber); }
+        .tick-item { margin-right: 20px; cursor: pointer; color: #666; } .tick-item:hover { color: var(--amber); }
 
         .header { background: #111; border-bottom: 1px solid var(--amber); padding: 4px 10px; display: flex; justify-content: space-between; align-items: center; height: 32px; }
-        .brand { font-weight: 900; color: var(--amber); letter-spacing: 1px; }
-        
-        /* SEARCH BAR */
-        .search-box { display: flex; align-items: center; background: #000; border: 1px solid #333; padding: 0 5px; width: 200px; }
-        .search-icon { color: #555; margin-right: 5px; }
-        #symbol-input { background: transparent; border: none; color: #fff; width: 100%; text-transform: uppercase; font-weight: bold; outline: none; padding: 3px 0; }
+        .search-box { display: flex; align-items: center; background: #000; border: 1px solid #333; width: 200px; padding: 0 5px; }
+        #symbol-input { background: transparent; border: none; color: #fff; width: 100%; text-transform: uppercase; outline: none; font-weight: bold; }
 
-        /* GRID SYSTEM */
         .grid { display: grid; grid-template-columns: 260px 1fr 300px; grid-template-rows: 32px 1fr 180px; gap: 1px; background: var(--border); flex-grow: 1; overflow: hidden; }
         .panel { background: var(--panel-bg); display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .title { background: #111; padding: 4px 8px; border-bottom: 1px solid var(--border); color: #888; font-weight: bold; display: flex; justify-content: space-between; font-size: 10px; align-items: center; }
+        .title { background: #111; padding: 4px 8px; border-bottom: 1px solid var(--border); color: #888; font-weight: bold; display: flex; justify-content: space-between; font-size: 10px; }
 
         /* TABS */
         .tabs-bar { grid-column: span 3; background: #080808; display: flex; align-items: center; border-bottom: 1px solid var(--border); padding: 0 5px; gap: 2px; }
-        .pair-badge { background: var(--amber); color: #000; font-weight: 900; font-size: 12px; padding: 2px 8px; margin-right: 10px; border-radius: 2px; }
-        .tab-btn { background: #151515; border: 1px solid #333; color: #666; padding: 4px 12px; cursor: pointer; font-size: 10px; min-width: 80px; transition: all 0.2s; }
+        .pair-badge { background: var(--amber); color: #000; font-weight: 900; font-size: 12px; padding: 2px 8px; margin-right: 10px; }
+        .tab-btn { background: #151515; border: 1px solid #333; color: #666; padding: 4px 12px; cursor: pointer; font-size: 10px; transition: all 0.2s; }
         .tab-btn:hover { color: #fff; background: #222; }
         .tab-btn.active { border-bottom: 2px solid var(--amber); color: var(--amber); background: #111; font-weight: bold; }
-        .tab-purple.active { border-color: var(--purple); color: var(--purple); } 
-        .tab-spacer { flex-grow: 1; }
+        .tab-defi.active { border-color: var(--blue); color: var(--blue); }
 
-        /* TRADING UI */
+        /* TRADING UI (LEFT PANEL) */
         .trade-panel { padding: 10px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid #333; overflow-y: auto; }
-        .input-group { display: flex; flex-direction: column; gap: 2px; margin-bottom: 5px; }
-        .lbl { font-size: 9px; color: #666; text-transform: uppercase; }
-        .t-input { background: #000; border: 1px solid #444; color: var(--amber); padding: 5px; width: 100%; text-align: right; font-weight: bold; font-family: monospace; }
-        .lev-container { display: flex; align-items: center; gap: 5px; font-size: 9px; color: #888; background: #111; padding: 5px; border: 1px solid #333; }
-        .slider { -webkit-appearance: none; width: 100%; height: 2px; background: #444; outline: none; }
-        .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: var(--amber); cursor: pointer; border-radius: 50%; }
-        
-        .btn-trade { width: 100%; padding: 8px; border: none; cursor: pointer; font-weight: 800; color: #000; text-transform: uppercase; margin-top:2px; }
+        .t-input { background: #000; border: 1px solid #444; color: var(--amber); padding: 5px; width: 100%; text-align: right; font-weight: bold; }
+        .btn-trade { width: 100%; padding: 8px; border: none; cursor: pointer; font-weight: 800; color: #000; text-transform: uppercase; }
         .btn-buy { background: var(--green); } .btn-sell { background: var(--red); }
         .position-box { background: #111; border-left: 3px solid #666; padding: 8px; display: none; margin-top: 5px; }
-
-        /* LISTS & TABLES */
+        
+        /* LISTS */
         .list { overflow-y: auto; flex-grow: 1; }
         .row { display: flex; justify-content: space-between; padding: 2px 8px; font-size: 10px; border-bottom: 1px solid #111; }
         .row:hover { background: #111; }
-        
-        /* DEPTH HEATMAP */
         .depth-row { display: flex; justify-content: space-between; position: relative; padding: 1px 8px; font-size: 10px; }
-        .depth-bg { position: absolute; top: 0; right: 0; bottom: 0; opacity: 0.2; z-index: 0; transition: width 0.2s; }
+        .depth-bg { position: absolute; top: 0; right: 0; bottom: 0; opacity: 0.2; z-index: 0; }
         .depth-val { position: relative; z-index: 1; }
-        .bg-ask { background-color: var(--red); } .bg-bid { background-color: var(--green); }
 
-        /* --- BLOCKCHAIN TAB STYLES --- */
-        #chain-container { width: 100%; height: 100%; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 1px; background: var(--border); }
-        .chain-box { background: var(--panel-bg); padding: 10px; overflow-y: auto; display: flex; flex-direction: column; }
-        .chain-header { color: var(--purple); font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; display: flex; justify-content: space-between; }
+        /* ================= DEFI WARROOM STYLES ================= */
+        #defi-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr; 
+            grid-template-rows: 1fr 1fr; 
+            gap: 1px; 
+            width: 100%; height: 100%; 
+            background: var(--border); 
+        }
+        .defi-mod { background: var(--panel-bg); display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .mod-head { background: #111; color: var(--blue); padding: 4px 8px; font-weight: bold; border-bottom: 1px solid #222; font-size: 10px; letter-spacing: 1px; }
         
-        .gas-meter { display: flex; gap: 10px; align-items: center; margin: 10px 0; }
-        .gas-val { font-size: 24px; font-weight: bold; color: #fff; }
-        .gas-lbl { color: #666; font-size: 10px; }
+        /* Module 1: RISK */
+        .peg-row { display: flex; justify-content: space-between; padding: 4px 8px; border-bottom: 1px dashed #222; font-size: 10px; }
+        .depeg { color: var(--red) !important; font-weight: bold; animation: blinker 0.5s infinite; }
+        .gas-bar-container { display: flex; height: 10px; gap: 1px; margin: 5px 8px; }
+        .gas-chunk { flex: 1; background: #222; }
         
-        .wallet-input { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 5px; margin-bottom: 5px; font-family: monospace; }
-        .token-list-item { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed #222; }
-        
+        /* Module 2: YIELD */
+        .apy-row { display: flex; justify-content: space-between; padding: 3px 8px; border-bottom: 1px solid #151515; font-size: 10px; }
+        .tvl-bar { height: 4px; background: #222; margin-top: 2px; position: relative; }
+        .tvl-fill { height: 100%; background: var(--blue); }
+
+        /* Module 3: MEV WARFARE */
+        #mev-feed { font-family: monospace; padding: 5px; overflow-y: hidden; }
+        .mev-item { font-size: 9px; margin-bottom: 4px; border-left: 2px solid var(--red); padding-left: 4px; }
+        .mev-profit { color: var(--green); font-weight: bold; }
+
+        /* Module 4: WALLET PROFILER */
+        .wallet-input { background: #000; border: 1px solid #333; color: #fff; width: 90%; margin: 5px auto; display: block; padding: 4px; font-family: monospace; }
+        .tag-badge { display: inline-block; padding: 2px 4px; border-radius: 2px; font-size: 8px; font-weight: bold; margin-right: 3px; }
+        .tag-diamond { background: rgba(0, 217, 255, 0.2); color: var(--liq); border: 1px solid var(--liq); }
+        .tag-bot { background: rgba(255, 51, 51, 0.2); color: var(--red); border: 1px solid var(--red); }
+
+        /* Module 5: TOOLS (IL CALC) */
+        .tool-row { padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; }
+        .tool-input { width: 60px; background: #000; border: 1px solid #444; color: #fff; text-align: right; }
+        .il-res { text-align: center; font-size: 14px; font-weight: bold; color: var(--red); padding: 10px; border: 1px solid #222; margin: 10px; }
+
         /* FOOTER */
         .foot { background: #080808; border-top: 1px solid #333; padding: 4px 10px; color: #666; display: flex; justify-content: space-between; font-size: 10px; align-items: center; height: 30px; }
         
-        /* TOASTS */
+        /* TOAST */
         #toast-container { position: absolute; bottom: 40px; right: 20px; width: 250px; display: flex; flex-direction: column; gap: 5px; pointer-events: none; z-index: 100; }
         .toast { background: #111; border: 1px solid var(--amber); color: #fff; padding: 10px; pointer-events: auto; box-shadow: 0 5px 15px #000; }
     </style>
@@ -101,30 +108,29 @@
 <body>
 
     <div class="ticker-wrap">
-        <div class="ticker" id="global-ticker">INITIALIZING MARKET STREAM...</div>
+        <div class="ticker" id="global-ticker">LOADING MARKET DATA...</div>
     </div>
 
     <div class="header">
         <div style="display:flex; gap:15px; align-items:center;">
-            <span class="brand">BLOOMBERG ENS® <span style="font-size:9px; color:#666; font-weight:normal;">v10 GOD MODE</span></span>
+            <span style="font-weight:900; color:var(--amber); letter-spacing:1px;">BLOOMBERG ENS® <span style="font-size:9px; color:#666; font-weight:normal;">v11 DEFI WARROOM</span></span>
             <div class="search-box">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="symbol-input" placeholder="SEARCH PAIR (e.g. SOLUSDT)" onkeypress="handleSearch(event)">
+                <span style="color:#555">🔍</span>
+                <input type="text" id="symbol-input" placeholder="SEARCH (e.g. ETHUSDT)" onkeypress="if(event.key==='Enter') switchPair(this.value)">
             </div>
         </div>
         <div style="display:flex; gap:15px; align-items:center; font-size:10px;">
-            <span>GAS: <span id="header-gas" style="color:var(--purple)">--</span> Gwei</span>
-            <span id="connection-status" style="color:var(--dim)">● CONNECTING</span>
-            <span id="clock">--:--:-- UTC</span>
+            <span>GAS: <span id="header-gas" style="color:var(--blue); font-weight:bold;">--</span></span>
+            <span id="conn-status" style="color:#555">● INIT</span>
+            <span id="clock">--:-- UTC</span>
         </div>
     </div>
 
     <div class="grid">
         <div class="tabs-bar">
-            <span class="pair-badge" id="current-pair-disp">BTCUSDT</span>
-            <button class="tab-btn active" onclick="setTab('chart', this)">TRADING VIEW</button>
-            <button class="tab-btn tab-purple" onclick="setTab('chain', this)">BLOCKCHAIN DATA</button>
-            <button class="tab-btn" onclick="setTab('depth', this)">DEPTH MAP</button>
+            <span class="pair-badge" id="pair-disp">BTCUSDT</span>
+            <button class="tab-btn active" onclick="setTab('chart',this)">TRADING</button>
+            <button class="tab-btn tab-defi" onclick="setTab('defi',this)">DEFI WARROOM</button>
             <div class="tab-spacer"></div>
             <button class="tab-btn" onclick="toggleHistory()">HISTORY</button>
         </div>
@@ -133,33 +139,21 @@
             <div class="title"><span style="color:var(--green)">PAPER TRADING</span><span>WALLET</span></div>
             <div class="trade-panel">
                 <div style="display:flex; justify-content:space-between; color:#aaa; font-size:10px;"><span>BALANCE</span><span id="wallet-bal" style="color:#fff; font-weight:bold">$10,000.00</span></div>
-                
-                <div class="input-group">
-                    <span class="lbl">Size (USD)</span>
-                    <input type="number" id="trade-size" class="t-input" value="1000">
+                <div style="margin-top:5px;"><span style="font-size:9px; color:#666;">SIZE (USD)</span><input type="number" id="trade-size" class="t-input" value="1000"></div>
+                <div style="margin-top:5px; display:flex; gap:5px;">
+                    <button class="btn-trade btn-buy" onclick="openPos('long')">LONG</button>
+                    <button class="btn-trade btn-sell" onclick="openPos('short')">SHORT</button>
                 </div>
-                
-                <div class="lev-container">
-                    <span class="lbl">LEV: <span id="lev-disp" style="color:#fff;">20x</span></span>
-                    <input type="range" min="1" max="125" value="20" class="slider" oninput="el('lev-disp').innerText=this.value+'x'">
-                </div>
-
-                <div style="display:flex; gap:5px; margin-top:5px;">
-                    <button class="btn-trade btn-buy" onclick="openPosition('long')">LONG</button>
-                    <button class="btn-trade btn-sell" onclick="openPosition('short')">SHORT</button>
-                </div>
-
-                <div id="position-box" class="position-box">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#888;">
+                <div id="pos-box" class="position-box">
+                    <div style="display:flex; justify-content:space-between; color:#888;">
                         <span id="pos-side" style="font-weight:bold">LONG</span>
                         <span id="pos-entry">@ 0.00</span>
                     </div>
                     <div id="pos-pnl" style="font-size:16px; font-weight:900; text-align:center; margin:5px 0;">0.00%</div>
-                    <button onclick="closePosition()" style="width:100%; background:#333; border:none; color:#fff; cursor:pointer;">CLOSE</button>
+                    <button onclick="closePos()" style="width:100%; background:#333; border:none; color:#fff; cursor:pointer;">CLOSE</button>
                 </div>
             </div>
-
-            <div class="title"><span>ORDER BOOK</span><span>L2 DATA</span></div>
+            <div class="title"><span>ORDER BOOK</span><span>L2</span></div>
             <div class="list">
                 <div id="asks" style="display:flex; flex-direction:column-reverse;"></div>
                 <div id="spread" style="text-align:center; color:#444; border-top:1px solid #222; border-bottom:1px solid #222; font-size:9px;">-</div>
@@ -168,61 +162,91 @@
         </div>
 
         <div class="panel" style="grid-row: span 2;">
-            <div id="tv-container" style="width:100%; height:100%;"></div>
             
-            <div id="chain-container" class="hidden">
-                <div class="chain-box">
-                    <div class="chain-header"><span>NETWORK HEALTH</span><span>ETH MAINNET</span></div>
-                    <div class="gas-meter">
-                        <span style="font-size:30px;">⛽</span>
-                        <div>
-                            <div class="gas-val" id="chain-gas">24</div>
-                            <div class="gas-lbl">GWEI (Standard)</div>
+            <div id="tv-cont" style="width:100%; height:100%;"></div>
+
+            <div id="defi-grid" class="hidden">
+                
+                <div class="defi-mod">
+                    <div class="mod-head">MARKET HEALTH & RISK</div>
+                    <div class="list">
+                        <div style="padding:5px; border-bottom:1px solid #222; color:#666; font-size:9px;">STABLECOIN PEG MONITOR</div>
+                        <div id="peg-list"></div> <div style="padding:5px; border-bottom:1px solid #222; color:#666; font-size:9px; margin-top:10px;">GAS HEATMAP (24H)</div>
+                        <div id="gas-heatmap" style="display:flex; flex-wrap:wrap; padding:5px; gap:1px;"></div>
+                        <div style="text-align:center; font-size:18px; font-weight:bold; color:#fff; margin-top:5px;"><span id="gwei-val">15</span> <span style="font-size:10px; color:#888;">GWEI</span></div>
+                    </div>
+                </div>
+
+                <div class="defi-mod">
+                    <div class="mod-head">PROTOCOL ANALYTICS</div>
+                    <div class="list">
+                        <div style="display:flex; justify-content:space-between; padding:4px 8px; color:#666; font-size:9px;"><span>ASSET</span><span>APY</span></div>
+                        <div id="yield-list"></div>
+                        
+                        <div style="padding:4px 8px; color:#666; font-size:9px; margin-top:10px;">TVL DOMINANCE</div>
+                        <div style="padding:5px;">
+                            <div style="display:flex; justify-content:space-between; font-size:9px;"><span>ETHEREUM</span><span>58%</span></div>
+                            <div class="tvl-bar"><div class="tvl-fill" style="width:58%"></div></div>
+                            <div style="display:flex; justify-content:space-between; font-size:9px; margin-top:4px;"><span>TRON</span><span>14%</span></div>
+                            <div class="tvl-bar"><div class="tvl-fill" style="width:14%; background:var(--red);"></div></div>
+                            <div style="display:flex; justify-content:space-between; font-size:9px; margin-top:4px;"><span>SOLANA</span><span>8%</span></div>
+                            <div class="tvl-bar"><div class="tvl-fill" style="width:8%; background:var(--purple);"></div></div>
                         </div>
                     </div>
-                    <div style="margin-top:10px;">
-                        <div class="row"><span>TPS (Real-time)</span><span style="color:#fff">14.2 tx/s</span></div>
-                        <div class="row"><span>Last Block</span><span id="last-block" style="color:var(--amber)">#1829304</span></div>
-                        <div class="row"><span>Difficulty</span><span>High</span></div>
+                </div>
+
+                <div class="defi-mod">
+                    <div class="mod-head">WALLET PROFILER V2</div>
+                    <div style="padding:10px; display:flex; flex-direction:column; align-items:center;">
+                        <input type="text" id="wallet-addr" class="wallet-input" placeholder="0x... Enter Address">
+                        <button onclick="profileWallet()" style="width:90%; background:var(--blue); color:#fff; border:none; cursor:pointer; padding:4px; font-weight:bold;">ANALYZE</button>
                     </div>
-                    <div style="margin-top:20px; border-top:1px solid #222; padding-top:10px;">
-                        <div class="chain-header"><span>FEAR & GREED</span></div>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <div style="width:40px; height:40px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center; color:#000; font-weight:bold;" id="fng-val">74</div>
-                            <div style="font-size:14px; font-weight:bold;" id="fng-txt">GREED</div>
+                    <div id="wallet-data" class="hidden" style="padding:0 10px;">
+                        <div style="text-align:center; font-size:20px; font-weight:bold; color:#fff; margin-bottom:5px;" id="w-worth">$0</div>
+                        <div id="w-tags" style="text-align:center; margin-bottom:10px;"></div>
+                        <div style="font-size:9px; color:#aaa; display:flex; justify-content:space-between; border-bottom:1px solid #222;"><span>REALIZED PNL</span><span id="w-real" style="color:var(--green)">+$0</span></div>
+                        <div style="font-size:9px; color:#aaa; display:flex; justify-content:space-between;"><span>UNREALIZED</span><span id="w-unreal" style="color:var(--red)">-$0</span></div>
+                    </div>
+                </div>
+
+                <div class="defi-mod">
+                    <div class="mod-head" style="color:var(--red)">ON-CHAIN WARFARE (MEV)</div>
+                    <div id="mev-feed"></div>
+                </div>
+
+                <div class="defi-mod">
+                    <div class="mod-head">BRIDGE FLOWS (1H)</div>
+                    <div style="padding:10px; display:flex; flex-direction:column; gap:5px;">
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <span style="font-size:9px; width:30px;">ETH</span>
+                            <div style="flex:1; height:6px; background:#222;"><div style="width:80%; height:100%; background:linear-gradient(90deg, #333, var(--blue));"></div></div>
+                            <span style="font-size:9px; width:30px;">L2</span>
+                        </div>
+                        <div style="font-size:9px; text-align:center; color:#666;">NET INFLOW: <span style="color:var(--green)">+$12.4M</span></div>
+                        <div style="border-top:1px dashed #333; margin-top:5px; padding-top:5px;">
+                            <div style="font-size:9px; color:#aaa;">TOP DESTINATION: <span style="color:#fff">BASE</span></div>
+                            <div style="font-size:9px; color:#aaa;">TOP SOURCE: <span style="color:#fff">SOLANA</span></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="chain-box">
-                    <div class="chain-header"><span>WALLET INSPECTOR</span><span>TRACKER</span></div>
-                    <input type="text" class="wallet-input" id="wallet-addr" placeholder="Paste 0x Address..." onkeypress="if(event.key==='Enter') scanWallet()">
-                    <div id="wallet-result" class="hidden">
-                        <div style="color:#aaa; font-size:9px; margin-bottom:5px;">TOTAL NET WORTH</div>
-                        <div style="font-size:18px; color:#fff; font-weight:bold; margin-bottom:10px;" id="wallet-worth">$0.00</div>
-                        <div id="token-list"></div>
-                    </div>
-                    <div id="wallet-loading" class="hidden" style="color:var(--purple); text-align:center; margin-top:20px;">
-                        <span class="blink">SCANNING BLOCKCHAIN...</span>
+                <div class="defi-mod">
+                    <div class="mod-head">IMPERMANENT LOSS CALC</div>
+                    <div style="padding:5px;">
+                        <div class="tool-row">
+                            <span style="font-size:9px; color:#aaa;">PRICE A (Entry)</span>
+                            <input type="number" id="il-entry" class="tool-input" value="1000">
+                        </div>
+                        <div class="tool-row">
+                            <span style="font-size:9px; color:#aaa;">PRICE B (Current)</span>
+                            <input type="number" id="il-curr" class="tool-input" value="1500">
+                        </div>
+                        <button onclick="calcIL()" style="width:100%; background:#222; border:1px solid #444; color:#aaa; cursor:pointer; font-size:9px;">CALCULATE LOSS</button>
+                        <div class="il-res" id="il-result">0.00%</div>
                     </div>
                 </div>
 
-                <div class="chain-box">
-                    <div class="chain-header"><span>DEFI PROTOCOLS</span><span>TVL</span></div>
-                    <div class="row"><span>LIDO STAKED ETH</span><span style="color:var(--green)">$34.2B</span></div>
-                    <div class="row"><span>AAVE V3</span><span style="color:var(--green)">$12.5B</span></div>
-                    <div class="row"><span>MAKER DAO</span><span style="color:var(--green)">$8.1B</span></div>
-                    <div class="row"><span>UNISWAP V3</span><span style="color:var(--green)">$5.4B</span></div>
-                    <div style="margin-top:10px; font-size:9px; color:#555;">*Based on estimated on-chain data</div>
-                </div>
-
-                <div class="chain-box">
-                    <div class="chain-header"><span>WHALE ALERT</span><span>MEMPOOL</span></div>
-                    <div id="whale-list" style="font-size:9px;"></div>
-                </div>
             </div>
-            
-            <div id="depth-placeholder" class="hidden" style="display:flex; justify-content:center; align-items:center; height:100%; color:#444;">DEPTH VISUALIZER (Simulated)</div>
         </div>
 
         <div class="panel">
@@ -231,13 +255,13 @@
         </div>
         
         <div class="panel">
-            <div class="title"><span>INTELLIGENCE</span><span>NEWS</span></div>
+            <div class="title"><span>NEWS</span><span>AI FEED</span></div>
             <div id="news-feed" class="list" style="padding:5px;"></div>
         </div>
     </div>
 
     <div class="panel" style="height:120px; border-top:1px solid #333; display:none;" id="history-panel">
-        <div class="title"><span>TRADE HISTORY</span><button onclick="toggleHistory()" style="background:none;border:none;color:#fff;">X</button></div>
+        <div class="title"><span>HISTORY</span><button onclick="toggleHistory()" style="background:none;border:none;color:#fff;">X</button></div>
         <div class="list" id="history-list"></div>
     </div>
 
@@ -245,263 +269,186 @@
         <div style="display:flex; gap:20px;">
             <span>PRICE: <span id="ft-price" style="color:#fff">--</span></span>
             <span>24H: <span id="ft-chg">--</span></span>
-            <span>VOL: <span id="ft-vol">--</span></span>
         </div>
         <div style="display:flex; gap:10px;">
-            <button onclick="toggleSound()" style="background:none; border:1px solid #333; color:#666; cursor:pointer;">SOUND</button>
             <button onclick="resetApp()" style="background:none; border:1px solid #333; color:#666; cursor:pointer;">RESET</button>
         </div>
     </div>
-
     <div id="toast-container"></div>
 
     <script>
-        // --- CONFIG & STATE ---
-        let state = {
-            pair: 'btcusdt',
-            wallet: 10000,
-            position: null,
-            history: [],
-            sound: false
-        };
+        // --- CORE & STATE ---
+        let state = { pair: 'btcusdt', wallet: 10000, pos: null, history: [] };
         const el = id => document.getElementById(id);
-        let ws = null, audioCtx = null;
+        let ws = null;
 
-        // --- 1. SEARCH & PAIR SWITCHING (FIXED) ---
-        function handleSearch(e) {
-            if (e.key === 'Enter') {
-                let val = e.target.value.trim().toUpperCase();
-                if (!val) return;
-                // Auto-append USDT if missing
-                if (!val.endsWith('USDT') && !val.endsWith('BTC') && !val.endsWith('ETH')) val += 'USDT';
-                
-                switchPair(val);
-                e.target.value = ''; // Clear input
-            }
-        }
-
-        function switchPair(newPair) {
-            state.pair = newPair.toLowerCase();
-            el('current-pair-disp').innerText = state.pair.toUpperCase();
-            
-            // Re-init WebSocket & Chart
-            startStream(state.pair);
-            initTV();
-            
-            showToast("SYSTEM", `SWITCHED TO ${state.pair.toUpperCase()}`);
-            document.title = `${state.pair.toUpperCase()} | BLOOMBERG v10`;
-        }
-
-        // --- 2. TRADING ENGINE (SIMPLIFIED) ---
-        function openPosition(side) {
-            if(state.position) return showToast("ERR", "Position already open");
+        // --- 1. TRADING ENGINE ---
+        function openPos(side) {
+            if(state.pos) return toast("ERR", "Position already open");
             const price = parseFloat(el('ft-price').innerText);
             if(!price) return;
-            
-            const size = parseFloat(el('trade-size').value);
-            state.wallet -= (size * 0.001); // Fees
-            
-            state.position = { side, entry: price, size };
-            el('position-box').style.display = 'block';
+            state.pos = { side, entry: price, size: parseFloat(el('trade-size').value) };
+            el('pos-box').style.display = 'block';
             el('pos-side').innerText = side.toUpperCase();
             el('pos-entry').innerText = "@ " + price.toFixed(2);
             updateWallet();
-            playSound('success');
+            toast("EXEC", `${side.toUpperCase()} FILLED`);
         }
-
-        function closePosition() {
-            if(!state.position) return;
+        function closePos() {
+            if(!state.pos) return;
             const price = parseFloat(el('ft-price').innerText);
-            const pnlPct = (price - state.position.entry) / state.position.entry * (state.position.side==='long'?1:-1);
-            const pnlUsd = state.position.size * pnlPct * 20; // 20x Lev hardcoded for visual
-            
-            state.wallet += pnlUsd;
-            state.history.unshift({ time: new Date().toLocaleTimeString(), pair: state.pair, pnl: pnlUsd });
-            state.position = null;
-            el('position-box').style.display = 'none';
+            const pnl = (price - state.pos.entry) / state.pos.entry * (state.pos.side==='long'?1:-1) * 20 * state.pos.size; // 20x Lev
+            state.wallet += pnl;
+            state.history.unshift({t:new Date().toLocaleTimeString(), p:pnl});
+            state.pos = null;
+            el('pos-box').style.display = 'none';
             updateWallet();
-            playSound('ping');
+            toast("EXEC", `CLOSED PNL: $${pnl.toFixed(2)}`);
         }
+        function updateWallet() { el('wallet-bal').innerText = "$" + state.wallet.toLocaleString(undefined, {minimumFractionDigits:2}); }
 
-        function updateWallet() {
-            el('wallet-bal').innerText = "$" + state.wallet.toLocaleString(undefined, {minimumFractionDigits:2});
-        }
+        // --- 2. DEFI WARROOM LOGIC ---
+        function initDefi() {
+            // A. Stablecoin Monitor
+            const stables = ['USDT', 'USDC', 'DAI', 'USDe'];
+            setInterval(() => {
+                let html = '';
+                stables.forEach(s => {
+                    const price = (0.9990 + Math.random() * 0.0025).toFixed(4);
+                    const isDepeg = price < 0.9995;
+                    html += `<div class="peg-row"><span>${s}</span><span class="${isDepeg?'depeg':''}" style="color:${price>=1?'var(--green)':'var(--red)'}">$${price}</span></div>`;
+                });
+                el('peg-list').innerHTML = html;
+            }, 2000);
 
-        // --- 3. BLOCKCHAIN TAB LOGIC (NEW) ---
-        function scanWallet() {
-            const addr = el('wallet-addr').value;
-            if(addr.length < 10) return showToast("ERR", "Invalid Address");
-            
-            el('wallet-loading').classList.remove('hidden');
-            el('wallet-result').classList.add('hidden');
-            
-            // SIMULATION OF API CALL
-            setTimeout(() => {
-                el('wallet-loading').classList.add('hidden');
-                el('wallet-result').classList.remove('hidden');
-                
-                // Randomize Portfolio based on "Whale" status
-                const eth = (Math.random() * 100).toFixed(2);
-                const usdt = (Math.random() * 500000).toFixed(2);
-                const total = (parseFloat(eth)*2000 + parseFloat(usdt));
-                
-                el('wallet-worth').innerText = "$" + total.toLocaleString();
-                el('token-list').innerHTML = `
-                    <div class="token-list-item"><span>ETH</span><span>${eth}</span></div>
-                    <div class="token-list-item"><span>USDT</span><span>${parseFloat(usdt).toLocaleString()}</span></div>
-                    <div class="token-list-item"><span>PEPE</span><span>${(Math.random()*1000000).toFixed(0)}</span></div>
-                    <div class="token-list-item"><span>WBTC</span><span>${(Math.random()*2).toFixed(4)}</span></div>
-                `;
-                showToast("SCAN", "Wallet Data Retrieved");
+            // B. Gas Heatmap
+            let gasHtml = '';
+            for(let i=0; i<24; i++) {
+                const color = i>10 && i<18 ? '#444' : (i>18?'var(--red)':'var(--green)');
+                gasHtml += `<div class="gas-chunk" style="background:${color}; height:8px; width:8px;"></div>`;
+            }
+            el('gas-heatmap').innerHTML = gasHtml;
+
+            // C. Yields
+            const yields = [
+                {n:'AAVE USDC', v:'5.4%'}, {n:'LIDO ETH', v:'3.1%'}, {n:'PENDLE PT', v:'12.2%'}, {n:'ENA USDe', v:'24%'}
+            ];
+            el('yield-list').innerHTML = yields.map(y => `<div class="apy-row"><span>${y.n}</span><span style="color:var(--green); font-weight:bold;">${y.v}</span></div>`).join('');
+
+            // D. MEV Feed Simulation
+            setInterval(() => {
+                if(el('defi-grid').classList.contains('hidden')) return;
+                const profit = (Math.random() * 500).toFixed(2);
+                const bot = '0x' + Math.floor(Math.random()*16777215).toString(16);
+                const div = document.createElement('div');
+                div.className = 'mev-item';
+                div.innerHTML = `SANDWICH ATK <span style="color:#666">${bot}</span> PROFIT: <span class="mev-profit">+$${profit}</span>`;
+                el('mev-feed').prepend(div);
+                if(el('mev-feed').children.length > 8) el('mev-feed').lastChild.remove();
             }, 1500);
         }
 
-        function updateChainData(price, volatility) {
-            // Simulate Gas based on volatility
-            const baseGas = 15;
-            const gas = Math.floor(baseGas + (volatility * 100));
-            el('chain-gas').innerText = gas;
-            el('header-gas').innerText = gas;
+        // --- 3. TOOLS ---
+        function profileWallet() {
+            el('wallet-data').classList.remove('hidden');
+            const val = Math.floor(Math.random() * 500000);
+            el('w-worth').innerText = "$" + val.toLocaleString();
+            el('w-real').innerText = "+$" + (val*0.2).toFixed(0);
+            el('w-unreal').innerText = "-$" + (val*0.05).toFixed(0);
             
-            // Simulate FNG
-            if(Math.random() > 0.95) {
-                const fng = 60 + Math.floor(Math.random() * 20);
-                el('fng-val').innerText = fng;
-                el('fng-txt').innerText = fng > 75 ? "EXTREME GREED" : "GREED";
-            }
-
-            // Simulate Whale Alerts
-            if(Math.random() > 0.9) {
-                const amt = (Math.random() * 1000).toFixed(0);
-                const coin = Math.random() > 0.5 ? "ETH" : "BTC";
-                const div = document.createElement('div');
-                div.style.borderBottom = "1px solid #222";
-                div.style.padding = "2px 0";
-                div.style.color = "var(--purple)";
-                div.innerHTML = `🚨 <b>${amt} ${coin}</b> transferred from Binance to Unknown Wallet`;
-                const list = el('whale-list');
-                list.prepend(div);
-                if(list.children.length > 8) list.lastChild.remove();
-            }
+            const tags = [];
+            if(Math.random()>0.5) tags.push('<span class="tag-badge tag-diamond">DIAMOND HANDS</span>');
+            if(Math.random()>0.7) tags.push('<span class="tag-badge tag-bot">MEV BOT</span>');
+            if(tags.length === 0) tags.push('<span class="tag-badge" style="border:1px solid #555; color:#555">NPC</span>');
+            el('w-tags').innerHTML = tags.join('');
         }
 
-        // --- 4. WEBSOCKETS ---
-        function startStream(pair) {
+        function calcIL() {
+            const ent = parseFloat(el('il-entry').value);
+            const curr = parseFloat(el('il-curr').value);
+            if(!ent || !curr) return;
+            const ratio = curr / ent;
+            // IL Formula: 2 * sqrt(ratio) / (1 + ratio) - 1
+            const il = (2 * Math.sqrt(ratio) / (1 + ratio)) - 1;
+            el('il-result').innerText = (il * 100).toFixed(2) + "%";
+        }
+
+        // --- 4. SYSTEM ---
+        function setTab(t, btn) {
+            el('tv-cont').classList.add('hidden');
+            el('defi-grid').classList.add('hidden');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if(t === 'chart') el('tv-cont').classList.remove('hidden');
+            if(t === 'defi') el('defi-grid').classList.remove('hidden');
+        }
+
+        function switchPair(p) {
+            if(!p.toUpperCase().endsWith('USDT')) p+='USDT';
+            state.pair = p.toLowerCase();
+            el('pair-disp').innerText = p.toUpperCase();
+            startStream(); initTV();
+        }
+
+        function startStream() {
             if(ws) ws.close();
-            el('connection-status').innerText = "● SYNCING";
-            ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${pair}@trade/${pair}@depth10@100ms/${pair}@ticker`);
-            
-            ws.onopen = () => { el('connection-status').innerText = "● LIVE"; el('connection-status').style.color="var(--green)"; };
-            ws.onmessage = (evt) => {
-                const msg = JSON.parse(evt.data);
-                const data = msg.data;
+            el('conn-status').innerText = "● SYNC";
+            ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${state.pair}@trade/${state.pair}@depth10@100ms/${state.pair}@ticker`);
+            ws.onopen = () => el('conn-status').innerText = "● LIVE";
+            ws.onmessage = (e) => {
+                const msg = JSON.parse(e.data);
                 const type = msg.stream.split('@')[1];
-
                 if(type === 'trade') {
-                    const p = parseFloat(data.p);
-                    const q = parseFloat(data.q);
-                    
-                    // Update Tape
-                    const row = document.createElement('div');
-                    row.className = 'row';
-                    row.innerHTML = `<span style="color:#555">${new Date().toLocaleTimeString()}</span><span style="color:${data.m?'var(--red)':'var(--green)'}">${p.toFixed(2)}</span><span>${q.toFixed(4)}</span>`;
-                    el('tape').prepend(row);
+                    const d = msg.data;
+                    const row = `<div class="row"><span style="color:#555">${new Date().toLocaleTimeString()}</span><span style="color:${d.m?'var(--red)':'var(--green)'}">${parseFloat(d.p).toFixed(2)}</span><span>${parseFloat(d.q).toFixed(4)}</span></div>`;
+                    el('tape').insertAdjacentHTML('afterbegin', row);
                     if(el('tape').children.length > 30) el('tape').lastChild.remove();
-
-                    // Update PnL
-                    if(state.position) {
-                        const diff = (p - state.position.entry) / state.position.entry;
-                        const pct = (state.position.side==='long' ? diff : -diff) * 20; // 20x lev
-                        el('pos-pnl').innerText = (pct*100).toFixed(2) + "%";
-                        el('pos-pnl').style.color = pct >= 0 ? "var(--green)" : "var(--red)";
+                    
+                    // Update News Simulation
+                    if(Math.random() > 0.98) {
+                        const news = `<div style="border-bottom:1px solid #222; padding:3px; font-size:9px; color:#aaa;">[AI] VOLUME SPIKE DETECTED ON ${state.pair.toUpperCase()}</div>`;
+                        el('news-feed').insertAdjacentHTML('afterbegin', news);
                     }
-
-                    // Feed Chain Simulation
-                    updateChainData(p, Math.abs(diff || 0));
                 }
-                
                 if(type === 'ticker') {
-                    el('ft-price').innerText = parseFloat(data.c).toFixed(2);
-                    el('ft-chg').innerText = parseFloat(data.P).toFixed(2) + "%";
-                    el('ft-vol').innerText = Math.floor(data.v);
+                    el('ft-price').innerText = parseFloat(msg.data.c).toFixed(2);
+                    el('ft-chg').innerText = parseFloat(msg.data.P).toFixed(2) + "%";
                 }
-
                 if(type.startsWith('depth')) {
-                    el('asks').innerHTML = data.asks.slice(0,10).reverse().map(a => `<div class="depth-row"><div class="depth-bg bg-ask" style="width:${Math.random()*100}%"></div><span class="depth-val" style="color:var(--red)">${parseFloat(a[0]).toFixed(2)}</span><span class="depth-val">${parseFloat(a[1]).toFixed(3)}</span></div>`).join('');
-                    el('bids').innerHTML = data.bids.slice(0,10).map(a => `<div class="depth-row"><div class="depth-bg bg-bid" style="width:${Math.random()*100}%"></div><span class="depth-val" style="color:var(--green)">${parseFloat(a[0]).toFixed(2)}</span><span class="depth-val">${parseFloat(a[1]).toFixed(3)}</span></div>`).join('');
+                    el('asks').innerHTML = msg.data.asks.slice(0,10).reverse().map(a=>`<div class="depth-row"><div class="depth-bg" style="width:${Math.random()*100}%; background:var(--red)"></div><span class="depth-val" style="color:var(--red)">${parseFloat(a[0]).toFixed(2)}</span><span class="depth-val">${parseFloat(a[1]).toFixed(3)}</span></div>`).join('');
+                    el('bids').innerHTML = msg.data.bids.slice(0,10).map(a=>`<div class="depth-row"><div class="depth-bg" style="width:${Math.random()*100}%; background:var(--green)"></div><span class="depth-val" style="color:var(--green)">${parseFloat(a[0]).toFixed(2)}</span><span class="depth-val">${parseFloat(a[1]).toFixed(3)}</span></div>`).join('');
                 }
             };
-        }
-
-        // --- 5. UI UTILS ---
-        function setTab(tab, btn) {
-            // Hide all centers
-            el('tv-container').classList.add('hidden');
-            el('chain-container').classList.add('hidden');
-            el('depth-placeholder').classList.add('hidden');
-            
-            // Remove active classes
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            if(btn) btn.classList.add('active');
-
-            if(tab === 'chart') el('tv-container').classList.remove('hidden');
-            if(tab === 'chain') el('chain-container').classList.remove('hidden');
-            if(tab === 'depth') el('depth-placeholder').classList.remove('hidden');
         }
 
         function initTV() {
-            if(!window.TradingView) return;
-            el('tv-container').innerHTML = '';
+            el('tv-cont').innerHTML = '';
             new TradingView.widget({
-                "autosize": true, "symbol": "BINANCE:" + state.pair.toUpperCase(), "interval": "1",
-                "timezone": "Etc/UTC", "theme": "dark", "style": "1", "locale": "en", "toolbar_bg": "#000",
-                "enable_publishing": false, "container_id": "tv-container", "hide_side_toolbar": false,
-                "overrides": { "paneProperties.background": "#000000" }
+                "autosize": true, "symbol": "BINANCE:"+state.pair.toUpperCase(), "interval": "1", "theme": "dark", "style": "1", "container_id": "tv-cont",
+                "toolbar_bg": "#000", "enable_publishing": false, "hide_side_toolbar": false, "overrides": { "paneProperties.background": "#000000" }
             });
         }
-
+        
         function startTicker() {
-            const tws = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
-            tws.onmessage = (e) => {
-                const data = JSON.parse(e.data).filter(d => d.s.endsWith('USDT')).sort((a,b)=>parseFloat(b.v)-parseFloat(a.v)).slice(0,15);
-                el('global-ticker').innerHTML = data.map(d => `<span class="tick-item" onclick="switchPair('${d.s}')">${d.s.replace('USDT','')} ${parseFloat(d.P).toFixed(1)}%</span>`).join('');
+            new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr').onmessage = (e) => {
+                const d = JSON.parse(e.data).filter(x=>x.s.endsWith('USDT')).sort((a,b)=>b.v-a.v).slice(0,15);
+                el('global-ticker').innerHTML = d.map(x=>`<span class="tick-item" onclick="switchPair('${x.s}')">${x.s.replace('USDT','')} ${parseFloat(x.P).toFixed(1)}%</span>`).join('');
             };
         }
 
-        function showToast(title, msg) {
-            const t = document.createElement('div');
-            t.className = 'toast pop-toast';
-            t.innerHTML = `<b>${title}</b><br>${msg}`;
-            el('toast-container').appendChild(t);
-            setTimeout(()=>t.remove(), 3000);
+        function toast(t,m) {
+            const d = document.createElement('div'); d.className='toast pop-toast'; d.innerHTML=`<b>${t}</b><br>${m}`;
+            el('toast-container').appendChild(d); setTimeout(()=>d.remove(),3000);
         }
-
-        function toggleSound() {
-            state.sound = !state.sound;
-            if(state.sound) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                showToast("AUDIO", "Sound FX Enabled");
-            }
-        }
-        function playSound(type) {
-            if(!state.sound || !audioCtx) return;
-            const o = audioCtx.createOscillator();
-            const g = audioCtx.createGain();
-            o.connect(g); g.connect(audioCtx.destination);
-            o.start(); o.stop(audioCtx.currentTime + 0.1);
+        function toggleHistory() { 
+            const p = el('history-panel'); p.style.display=p.style.display==='none'?'flex':'none'; 
+            el('history-list').innerHTML = state.history.map(h=>`<div class="row"><span>${h.t}</span><span>PNL: ${h.p.toFixed(2)}$</span></div>`).join('');
         }
         function resetApp() { if(confirm("Reset?")) location.reload(); }
-        function toggleHistory() { 
-            const p = el('history-panel'); 
-            p.style.display = p.style.display==='none'?'flex':'none'; 
-            el('history-list').innerHTML = state.history.map(h => `<div class="row"><span>${h.time}</span><span>${h.pair}</span><span>${h.pnl.toFixed(2)}$</span></div>`).join('');
-        }
 
-        // INIT
+        // BOOT
         setInterval(() => el('clock').innerText = new Date().toISOString().split('T')[1].split('.')[0] + ' UTC', 1000);
-        startStream(state.pair);
-        startTicker();
-        initTV();
+        startStream(); startTicker(); initTV(); initDefi();
 
     </script>
 </body>
