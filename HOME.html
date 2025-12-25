@@ -3,387 +3,236 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLOOMBERG ENS® - LIVE TERMINAL</title>
+    <title>BLOOMBERG ENS® - TERMINAL</title>
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         :root {
-            --bg-color: #000000;
-            --panel-bg: #0a0a0a;
-            --border: #333333;
-            --text-main: #ffaa00; /* Bloomberg Amber */
-            --text-dim: #666666;
-            --up-color: #00ff00;
-            --down-color: #ff0000;
-            --font-stack: 'Courier New', 'Consolas', monospace;
+            --bg: #000000;
+            --amber: #ffaa00;
+            --dim: #666;
+            --green: #00ff00;
+            --red: #ff0000;
+            --border: #333;
         }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', monospace; }
+        body { background: var(--bg); color: var(--amber); height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-size: 11px; }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* HEADER */
+        .header { background: var(--amber); color: #000; padding: 4px 10px; font-weight: bold; display: flex; justify-content: space-between; }
+        .cmd { background: #111; border-bottom: 1px solid var(--amber); padding: 5px; display: flex; align-items: center; }
+        .cmd input { background: transparent; border: none; color: var(--amber); width: 200px; margin-left: 10px; text-transform: uppercase; outline: none; font-weight: bold; }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: var(--font-stack);
-            font-size: 11px;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        /* --- HEADER & COMMAND --- */
-        .top-bar {
-            background: var(--text-main);
-            color: #000;
-            padding: 4px 10px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-        }
+        /* GRID LAYOUT */
+        .grid { display: grid; grid-template-columns: 280px 1fr 280px; grid-template-rows: 1fr 180px; gap: 1px; background: var(--border); flex-grow: 1; }
+        .panel { background: var(--bg); display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .title { background: #111; padding: 4px; border-bottom: 1px solid var(--border); color: var(--dim); font-weight: bold; display: flex; justify-content: space-between; }
         
-        .cmd-line {
-            background: #111;
-            border-bottom: 1px solid var(--text-main);
-            padding: 5px 10px;
-            display: flex;
-            align-items: center;
-        }
-        .cmd-input {
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            font-family: inherit;
-            margin-left: 10px;
-            width: 300px;
-            text-transform: uppercase;
-            outline: none;
-        }
+        /* DATA LISTS */
+        .list { overflow: hidden; flex-grow: 1; }
+        .row { display: flex; justify-content: space-between; padding: 1px 5px; }
+        .g { color: var(--green); } .r { color: var(--red); }
 
-        /* --- LAYOUT GRID --- */
-        .grid-container {
-            display: grid;
-            grid-template-columns: 280px 1fr 280px; /* Gauche - Centre - Droite */
-            grid-template-rows: 1fr 180px; /* Haut - Bas */
-            gap: 1px;
-            background-color: var(--border);
-            flex-grow: 1;
-        }
+        /* CHART */
+        #chart { width: 100%; height: 100%; }
 
-        .panel {
-            background-color: var(--bg-color);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+        /* STATS BOXES */
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px; }
+        .box { border: 1px solid var(--border); padding: 5px; }
+        .lbl { color: var(--dim); font-size: 9px; }
+        .val { font-size: 13px; font-weight: bold; }
 
-        .panel-header {
-            background: #111;
-            padding: 3px 8px;
-            border-bottom: 1px solid var(--border);
-            font-weight: bold;
-            color: var(--text-dim);
-            font-size: 10px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        /* --- COMPONENTS --- */
-        
-        /* Order Book */
-        .order-book { overflow-y: hidden; flex-grow: 1; font-size: 10px; }
-        .ob-row { display: flex; justify-content: space-between; padding: 1px 8px; position: relative; }
-        .ob-bg { position: absolute; top: 0; bottom: 0; right: 0; opacity: 0.2; z-index: 0; }
-        .ob-ask .ob-bg { background: var(--down-color); }
-        .ob-bid .ob-bg { background: var(--up-color); }
-        .ob-val { z-index: 1; position: relative; }
-        .ask-text { color: var(--down-color); }
-        .bid-text { color: var(--up-color); }
-
-        /* Chart Container */
-        #chart-container { width: 100%; height: 100%; }
-
-        /* Ticker Tape */
-        .tape-list { overflow: hidden; }
-        .trade-item { 
-            display: flex; 
-            justify-content: space-between; 
-            padding: 2px 8px; 
-            border-bottom: 1px solid #111;
-        }
-        .trade-buy { color: var(--up-color); }
-        .trade-sell { color: var(--down-color); }
-
-        /* Stats Panel */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            padding: 10px;
-            gap: 15px;
-        }
-        .stat-box { border: 1px solid var(--border); padding: 5px; }
-        .stat-label { color: var(--text-dim); font-size: 9px; margin-bottom: 2px; }
-        .stat-value { font-size: 14px; font-weight: bold; }
-
-        /* Footer */
-        .footer {
-            background: #111;
-            padding: 4px 10px;
-            color: var(--text-dim);
-            font-size: 9px;
-            display: flex;
-            justify-content: space-between;
-            border-top: 1px solid var(--border);
-        }
-        .connection-status { color: var(--up-color); }
-
+        /* FOOTER */
+        .foot { background: #111; border-top: 1px solid #333; padding: 5px; color: var(--dim); display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
 
-    <div class="top-bar">
+    <div class="header">
         <span>BLOOMBERG ENS TERMINAL</span>
-        <span id="clock">--:--:-- UTC</span>
+        <span id="time">--:--:-- UTC</span>
     </div>
-    <div class="cmd-line">
+    
+    <div class="cmd">
         <span>COMMAND ></span>
-        <input type="text" class="cmd-input" value="BTCUSDT" id="pair-input" placeholder="ENTER PAIR...">
-        <span style="color:var(--text-dim)">[PRESS ENTER TO LOAD]</span>
+        <input type="text" id="pair" value="BTCUSDT" placeholder="ENTER PAIR...">
+        <span style="color:#444">[ENTER TO LOAD]</span>
     </div>
 
-    <div class="grid-container">
-        
+    <div class="grid">
         <div class="panel" style="grid-row: span 2;">
-            <div class="panel-header">
-                <span>ORDER BOOK (DEPTH)</span>
-                <span>BTC/USDT</span>
+            <div class="title"><span>ORDER BOOK</span><span>DEPTH</span></div>
+            <div class="list">
+                <div id="asks" style="display:flex; flex-direction:column-reverse;"></div> <div id="spread" style="text-align:center; color:#444; padding:2px;">---</div>
+                <div id="bids"></div>
             </div>
-            <div style="display:flex; justify-content:space-between; padding:4px 8px; color:var(--text-dim); font-size:9px;">
-                <span>PRICE</span><span>SIZE</span>
-            </div>
-            <div id="asks-container" class="order-book" style="border-bottom:1px solid var(--border);"></div>
-            <div id="spread-display" style="text-align:center; padding:2px; color:var(--text-dim);">SPREAD: --</div>
-            <div id="bids-container" class="order-book"></div>
         </div>
 
         <div class="panel">
-            <div class="panel-header">
-                <span>CHART: LIVE FEED (1M)</span>
-                <span id="current-price-header" style="font-size:12px; color: var(--text-main);">LOADING...</span>
+            <div class="title">
+                <span>CHART (1M)</span>
+                <span id="price" style="color:var(--amber)">LOADING...</span>
             </div>
-            <div id="chart-container"></div>
+            <div id="chart"></div>
         </div>
 
         <div class="panel" style="grid-row: span 2;">
-            <div class="panel-header">
-                <span>TAPE (REAL-TIME TRADES)</span>
-                <span>VOL</span>
-            </div>
-            <div id="tape-container" class="tape-list">
-                </div>
+            <div class="title"><span>TAPE</span><span>TRADES</span></div>
+            <div id="tape" class="list"></div>
         </div>
 
         <div class="panel">
-            <div class="panel-header">MARKET INTELLIGENCE</div>
-            <div class="stats-grid">
-                <div class="stat-box">
-                    <div class="stat-label">FEAR & GREED</div>
-                    <div class="stat-value" id="fng-value">--</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">24H VOL (BTC)</div>
-                    <div class="stat-value" id="vol-value">--</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">24H HIGH</div>
-                    <div class="stat-value" id="high-value">--</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">ETH GAS (EST)</div>
-                    <div class="stat-value" id="gas-value">~15 Gwei</div>
-                </div>
+            <div class="title">MARKET DATA (24H)</div>
+            <div class="stats">
+                <div class="box"><div class="lbl">24H HIGH</div><div class="val" id="high">--</div></div>
+                <div class="box"><div class="lbl">24H LOW</div><div class="val" id="low">--</div></div>
+                <div class="box"><div class="lbl">24H VOL</div><div class="val" id="vol">--</div></div>
+                <div class="box"><div class="lbl">CHANGE %</div><div class="val" id="chg">--</div></div>
             </div>
         </div>
-
     </div>
 
-    <div class="footer">
-        <div>SYSTEM STATUS: <span class="connection-status">● STREAMING DATA</span></div>
-        <div>DATA SOURCE: BINANCE PUBLIC API • ALTERNATIVE.ME</div>
+    <div class="foot">
+        <div id="status">● SYSTEM READY</div>
+        <div>BINANCE STREAM (WSS)</div>
     </div>
 
     <script>
-        // --- CONFIGURATION ---
-        let currentPair = 'btcusdt';
+        // --- 1. CONFIG & UTILS ---
         let ws = null;
-        let chart, candleSeries;
+        let chart, series;
+        let currentPair = 'btcusdt';
 
-        // --- GESTION DES MESSAGES D'ETAT ---
-        function logStatus(msg, type = 'normal') {
-            const el = document.getElementById('current-price-header');
-            el.innerText = msg;
-            if(type === 'error') el.style.color = 'red';
-            else el.style.color = '#ffaa00';
-            console.log(msg);
-        }
+        const el = (id) => document.getElementById(id);
+        const log = (msg) => { el('status').innerText = "● " + msg; };
 
-        // --- 1. HORLOGE INDÉPENDANTE ---
-        function updateClock() {
-            const now = new Date();
-            const timeString = now.toISOString().split('T')[1].split('.')[0] + ' UTC';
-            document.getElementById('clock').innerText = timeString;
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
+        // Horloge
+        setInterval(() => {
+            el('time').innerText = new Date().toISOString().split('T')[1].split('.')[0] + ' UTC';
+        }, 1000);
 
-        // --- 2. INITIALISATION DU GRAPHIQUE ---
+        // --- 2. CHART SETUP ---
         function initChart() {
-            try {
-                const chartContainer = document.getElementById('chart-container');
-                chart = LightweightCharts.createChart(chartContainer, {
-                    layout: { background: { color: '#000000' }, textColor: '#ffaa00' },
-                    grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
-                    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-                    rightPriceScale: { borderColor: '#333', scaleMargins: { top: 0.1, bottom: 0.1 } },
-                    timeScale: { borderColor: '#333', timeVisible: true, secondsVisible: false },
-                });
-
-                candleSeries = chart.addCandlestickSeries({
-                    upColor: '#00ff00', downColor: '#ff0000',
-                    borderVisible: false, wickUpColor: '#00ff00', wickDownColor: '#ff0000',
-                });
-                
-                new ResizeObserver(entries => {
-                    if (entries.length === 0 || entries[0].target !== chartContainer) return;
-                    const newRect = entries[0].contentRect;
-                    chart.applyOptions({ width: newRect.width, height: newRect.height });
-                }).observe(chartContainer);
-            } catch (e) {
-                logStatus("ERREUR CHART: " + e.message, 'error');
-            }
+            const container = el('chart');
+            chart = LightweightCharts.createChart(container, {
+                layout: { background: { color: '#000000' }, textColor: '#ffaa00' },
+                grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
+                crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+                rightPriceScale: { borderColor: '#333' },
+                timeScale: { borderColor: '#333', timeVisible: true }
+            });
+            series = chart.addCandlestickSeries({
+                upColor: '#00ff00', downColor: '#ff0000', borderVisible: false, wickUpColor: '#00ff00', wickDownColor: '#ff0000'
+            });
+            
+            new ResizeObserver(entries => {
+                if (entries.length) chart.applyOptions({ width: entries[0].contentRect.width, height: entries[0].contentRect.height });
+            }).observe(container);
         }
 
-        // --- 3. CONNEXION WEBSOCKET (DIRECT) ---
-        function connectWebSocket(pair) {
+        // --- 3. WEBSOCKET LOGIC (LE COEUR DU SYSTEME) ---
+        function startStream(pair) {
             if (ws) ws.close();
-            
-            logStatus("CONNEXION STREAM...", 'normal');
+            log("CONNECTING...");
 
-            // Abonnement aux 3 flux en même temps
-            const streams = [`${pair}@kline_1m`, `${pair}@depth20`, `${pair}@trade`].join('/');
+            // On s'abonne à tout d'un coup : Graphique + Profondeur + Trades + Stats 24h
+            const streams = [
+                `${pair}@kline_1m`,
+                `${pair}@depth10`,
+                `${pair}@trade`,
+                `${pair}@ticker`
+            ].join('/');
+
             ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
 
-            ws.onopen = () => {
-                logStatus("LIVE FEED ACTIF", 'normal');
-                document.querySelector('.connection-status').style.color = '#00ff00';
-            };
-            
-            ws.onerror = (e) => {
-                logStatus("ERREUR WEBSOCKET", 'error');
-            };
+            ws.onopen = () => { log("STREAM ACTIVE"); el('status').style.color = "#00ff00"; };
+            ws.onerror = () => { log("CONNECTION ERROR"); el('status').style.color = "red"; };
 
-            ws.onmessage = (event) => {
-                const message = JSON.parse(event.data);
-                const data = message.data;
-                const type = message.stream.split('@')[1];
+            ws.onmessage = (evt) => {
+                const msg = JSON.parse(evt.data);
+                const type = msg.stream.split('@')[1];
+                const data = msg.data;
 
+                // A. Graphique & Prix
                 if (type === 'kline_1m') {
                     const k = data.k;
-                    candleSeries.update({
+                    series.update({
                         time: k.t / 1000, open: parseFloat(k.o), high: parseFloat(k.h), low: parseFloat(k.l), close: parseFloat(k.c)
                     });
-                    document.getElementById('current-price-header').innerText = `${pair.toUpperCase()}: ${parseFloat(k.c).toFixed(2)}`;
-                    document.getElementById('vol-value').innerText = Math.floor(parseFloat(k.v));
-                    document.getElementById('high-value').innerText = parseFloat(k.h).toFixed(2);
+                    el('price').innerText = `${pair.toUpperCase()} : ${parseFloat(k.c).toFixed(2)}`;
                 }
-                if (type === 'depth20') handleDepth(data);
-                if (type === 'trade') handleTrade(data);
+
+                // B. Stats 24H (C'est ça qui manquait !)
+                if (type === 'ticker') {
+                    el('high').innerText = parseFloat(data.h).toFixed(2);
+                    el('low').innerText = parseFloat(data.l).toFixed(2);
+                    el('vol').innerText = Math.floor(data.v);
+                    const chg = parseFloat(data.P);
+                    el('chg').innerHTML = `<span class="${chg >= 0 ? 'g' : 'r'}">${chg.toFixed(2)}%</span>`;
+                }
+
+                // C. Carnet d'ordres
+                if (type === 'depth10') {
+                    renderBook(data.asks, el('asks'), 'r', true); // Vendeurs
+                    renderBook(data.bids, el('bids'), 'g', false); // Acheteurs
+                    // Spread simple
+                    const bestAsk = parseFloat(data.asks[0][0]);
+                    const bestBid = parseFloat(data.bids[0][0]);
+                    el('spread').innerText = (bestAsk - bestBid).toFixed(2);
+                }
+
+                // D. Tape (Trades)
+                if (type === 'trade') {
+                    const row = document.createElement('div');
+                    row.className = 'row';
+                    row.innerHTML = `
+                        <span style="color:#555">${new Date(data.T).toLocaleTimeString().split(' ')[0]}</span>
+                        <span class="${data.m ? 'r' : 'g'}">${parseFloat(data.p).toFixed(2)}</span>
+                        <span style="color:#666">${parseFloat(data.q).toFixed(4)}</span>
+                    `;
+                    const tape = el('tape');
+                    tape.prepend(row);
+                    if (tape.children.length > 20) tape.lastChild.remove();
+                }
             };
         }
 
-        // Gestion du carnet d'ordres
-        function handleDepth(data) {
-            const asksContainer = document.getElementById('asks-container');
-            const bidsContainer = document.getElementById('bids-container');
-            asksContainer.innerHTML = ''; 
-            bidsContainer.innerHTML = '';
-
-            // Limite à 8 items pour la fluidité
-            data.asks.slice(0, 8).reverse().forEach(ask => asksContainer.appendChild(createOrderRow(ask, 'ob-ask')));
-            data.bids.slice(0, 8).forEach(bid => bidsContainer.appendChild(createOrderRow(bid, 'ob-bid')));
+        // Helper pour afficher le carnet
+        function renderBook(list, container, colorClass, reverse) {
+            container.innerHTML = '';
+            // On prend juste 5 lignes pour la performance
+            const sliced = list.slice(0, 8); 
+            // Si c'est les Asks (vendeurs), on inverse l'ordre pour avoir le prix le plus bas en bas
+            const dataToRender = reverse ? sliced.reverse() : sliced;
             
-            const spread = (parseFloat(data.asks[0][0]) - parseFloat(data.bids[0][0])).toFixed(2);
-            document.getElementById('spread-display').innerText = `SPREAD: ${spread}`;
+            dataToRender.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'row';
+                row.innerHTML = `<span class="${colorClass}">${parseFloat(item[0]).toFixed(2)}</span><span style="color:#444">${parseFloat(item[1]).toFixed(4)}</span>`;
+                container.appendChild(row);
+            });
         }
 
-        function createOrderRow(item, type) {
-            const price = parseFloat(item[0]).toFixed(2);
-            const size = parseFloat(item[1]).toFixed(4);
-            const width = Math.min(size * 10, 100); // Visualisation graphique
-            const div = document.createElement('div');
-            div.className = `ob-row ${type}`;
-            div.innerHTML = `<div class="ob-bg" style="width:${width}%"></div><span class="ob-val ${type==='ob-ask'?'ask-text':'bid-text'}">${price}</span><span class="ob-val" style="color:#666">${size}</span>`;
-            return div;
-        }
-
-        // Gestion du Tape (Transactions)
-        function handleTrade(data) {
-            const container = document.getElementById('tape-container');
-            const row = document.createElement('div');
-            row.className = 'trade-item';
-            row.innerHTML = `<span style="color:#555">${new Date(data.T).toLocaleTimeString()}</span><span class="${data.m ? 'trade-sell' : 'trade-buy'}">${parseFloat(data.p).toFixed(2)}</span><span style="color:#888">${parseFloat(data.q).toFixed(5)}</span>`;
-            container.prepend(row);
-            if (container.children.length > 25) container.lastChild.remove();
-        }
-
-        // --- 4. CHARGEMENT HISTORIQUE (REST) ---
-        async function fetchHistory(pair) {
-            try {
-                // Tente de récupérer 200 bougies passées
-                const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${pair.toUpperCase()}&interval=1m&limit=200`);
-                if (!res.ok) throw new Error("API Rest Error");
-                const data = await res.json();
-                const candles = data.map(d => ({
-                    time: d[0] / 1000, open: parseFloat(d[1]), high: parseFloat(d[2]), low: parseFloat(d[3]), close: parseFloat(d[4])
-                }));
-                candleSeries.setData(candles);
-            } catch (e) {
-                console.log("Historique non disponible (CORS), le graphique se construira en temps réel.");
-            }
-        }
-
-        async function fetchSentiment() {
-            try {
-                const res = await fetch('https://api.alternative.me/fng/');
-                const data = await res.json();
-                document.getElementById('fng-value').innerText = data.data[0].value;
-            } catch(e) {}
-        }
-
-        // --- 5. DÉMARRAGE DE L'APPLICATION ---
+        // --- 4. STARTUP ---
         
-        // A. On initialise le graphique
-        initChart();
+        // On initialise le graphique vide
+        try {
+            initChart();
+        } catch(e) {
+            console.error("Erreur Graphique", e);
+        }
 
-        // B. On lance le direct IMMÉDIATEMENT (Sans attendre l'historique)
-        connectWebSocket(currentPair);
-        
-        // C. On lance les tâches secondaires en parallèle
-        fetchHistory(currentPair);
-        fetchSentiment();
+        // On lance le flux
+        startStream(currentPair);
 
-        // D. Gestion de la barre de commande (Changement de paire)
-        document.getElementById('pair-input').addEventListener('keypress', (e) => {
-            if(e.key === 'Enter') {
+        // Gestion Input
+        el('pair').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
                 const val = e.target.value.toLowerCase().trim();
-                if(val) {
+                if (val) {
                     currentPair = val;
-                    // Reset du graphique
-                    if(candleSeries) candleSeries.setData([]); 
-                    document.getElementById('current-price-header').innerText = "SWITCHING PAIR...";
-                    
-                    // Relance du système
-                    connectWebSocket(currentPair);
-                    fetchHistory(currentPair);
+                    if (series) series.setData([]); // Reset graph
+                    el('price').innerText = "SWITCHING...";
+                    startStream(currentPair);
                 }
             }
         });
