@@ -3,12 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLOOMBERG ENS® - DEFI WARROOM v11</title>
+    <title>BLOOMBERG ENS® - ULTIMATE TRADER V12</title>
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
         :root { 
-            --bg: #050505; --amber: #ffaa00; --dim: #555; --green: #00ff41; --red: #ff3333; 
-            --liq: #00d9ff; --border: #222; --panel-bg: #0a0a0a; --purple: #9d00ff; --blue: #2962ff;
+            --bg: #050505; 
+            --amber: #ffaa00; 
+            --dim: #555; 
+            --green: #00ff41; 
+            --red: #ff3333; 
+            --liq: #00d9ff; 
+            --border: #222; 
+            --panel-bg: #0a0a0a; 
+            --purple: #9d00ff; 
+            --blue: #2962ff;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Consolas', 'Monaco', monospace; user-select: none; }
         body { background: var(--bg); color: var(--amber); height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-size: 11px; }
@@ -17,15 +25,19 @@
         .hidden { display: none !important; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-thumb { background: #333; }
+        ::-webkit-scrollbar-track { background: #000; }
         .blink { animation: blinker 1s linear infinite; }
         @keyframes blinker { 50% { opacity: 0; } }
         .flash-red { animation: flashR 0.2s; } @keyframes flashR { 0% { background: var(--red); color:#000; } }
+        .pop-toast { animation: slideIn 0.3s ease-out forwards; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
 
         /* LAYOUT MAIN */
         .ticker-wrap { background: #080808; border-bottom: 1px solid #333; padding: 2px 0; font-size: 10px; white-space: nowrap; overflow: hidden; }
         .ticker { display: inline-block; animation: ticker 60s linear infinite; }
         @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-        .tick-item { margin-right: 20px; cursor: pointer; color: #666; } .tick-item:hover { color: var(--amber); }
+        .tick-item { margin-right: 20px; cursor: pointer; color: #666; transition: color 0.2s; } 
+        .tick-item:hover { color: var(--amber); }
 
         .header { background: #111; border-bottom: 1px solid var(--amber); padding: 4px 10px; display: flex; justify-content: space-between; align-items: center; height: 32px; }
         .search-box { display: flex; align-items: center; background: #000; border: 1px solid #333; width: 200px; padding: 0 5px; }
@@ -37,7 +49,7 @@
 
         /* TABS */
         .tabs-bar { grid-column: span 3; background: #080808; display: flex; align-items: center; border-bottom: 1px solid var(--border); padding: 0 5px; gap: 2px; }
-        .pair-badge { background: var(--amber); color: #000; font-weight: 900; font-size: 12px; padding: 2px 8px; margin-right: 10px; }
+        .pair-badge { background: var(--amber); color: #000; font-weight: 900; font-size: 12px; padding: 2px 8px; margin-right: 10px; border-radius: 2px; }
         .tab-btn { background: #151515; border: 1px solid #333; color: #666; padding: 4px 12px; cursor: pointer; font-size: 10px; transition: all 0.2s; }
         .tab-btn:hover { color: #fff; background: #222; }
         .tab-btn.active { border-bottom: 2px solid var(--amber); color: var(--amber); background: #111; font-weight: bold; }
@@ -48,14 +60,14 @@
         .t-input { background: #000; border: 1px solid #444; color: var(--amber); padding: 5px; width: 100%; text-align: right; font-weight: bold; }
         .btn-trade { width: 100%; padding: 8px; border: none; cursor: pointer; font-weight: 800; color: #000; text-transform: uppercase; }
         .btn-buy { background: var(--green); } .btn-sell { background: var(--red); }
-        .position-box { background: #111; border-left: 3px solid #666; padding: 8px; display: none; margin-top: 5px; }
+        .position-box { background: #111; border-left: 3px solid #666; padding: 8px; display: none; margin-top: 5px; animation: pop-toast 0.2s; }
         
         /* LISTS */
         .list { overflow-y: auto; flex-grow: 1; }
         .row { display: flex; justify-content: space-between; padding: 2px 8px; font-size: 10px; border-bottom: 1px solid #111; }
         .row:hover { background: #111; }
         .depth-row { display: flex; justify-content: space-between; position: relative; padding: 1px 8px; font-size: 10px; }
-        .depth-bg { position: absolute; top: 0; right: 0; bottom: 0; opacity: 0.2; z-index: 0; }
+        .depth-bg { position: absolute; top: 0; right: 0; bottom: 0; opacity: 0.2; z-index: 0; transition: width 0.1s; }
         .depth-val { position: relative; z-index: 1; }
 
         /* ================= DEFI WARROOM STYLES ================= */
@@ -92,7 +104,11 @@
         .tag-diamond { background: rgba(0, 217, 255, 0.2); color: var(--liq); border: 1px solid var(--liq); }
         .tag-bot { background: rgba(255, 51, 51, 0.2); color: var(--red); border: 1px solid var(--red); }
 
-        /* Module 5: TOOLS (IL CALC) */
+        /* Module 5: UNLOCKS & FEES */
+        .l2-bar-bg { height: 4px; background: #222; flex:1; margin: 0 5px; }
+        .l2-bar-fill { height: 100%; transition: width 0.5s; }
+
+        /* Module 6: TOOLS (IL CALC) */
         .tool-row { padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; }
         .tool-input { width: 60px; background: #000; border: 1px solid #444; color: #fff; text-align: right; }
         .il-res { text-align: center; font-size: 14px; font-weight: bold; color: var(--red); padding: 10px; border: 1px solid #222; margin: 10px; }
@@ -108,15 +124,15 @@
 <body>
 
     <div class="ticker-wrap">
-        <div class="ticker" id="global-ticker">LOADING MARKET DATA...</div>
+        <div class="ticker" id="global-ticker">INITIALIZING GLOBAL MARKET DATA STREAM...</div>
     </div>
 
     <div class="header">
         <div style="display:flex; gap:15px; align-items:center;">
-            <span style="font-weight:900; color:var(--amber); letter-spacing:1px;">BLOOMBERG ENS® <span style="font-size:9px; color:#666; font-weight:normal;">v11 DEFI WARROOM</span></span>
+            <span style="font-weight:900; color:var(--amber); letter-spacing:1px;">BLOOMBERG ENS® <span style="font-size:9px; color:#666; font-weight:normal;">v12 ULTIMATE</span></span>
             <div class="search-box">
                 <span style="color:#555">🔍</span>
-                <input type="text" id="symbol-input" placeholder="SEARCH (e.g. ETHUSDT)" onkeypress="if(event.key==='Enter') switchPair(this.value)">
+                <input type="text" id="symbol-input" placeholder="SEARCH (e.g. SOLUSDT)" onkeypress="if(event.key==='Enter') switchPair(this.value)">
             </div>
         </div>
         <div style="display:flex; gap:15px; align-items:center; font-size:10px;">
@@ -140,10 +156,12 @@
             <div class="trade-panel">
                 <div style="display:flex; justify-content:space-between; color:#aaa; font-size:10px;"><span>BALANCE</span><span id="wallet-bal" style="color:#fff; font-weight:bold">$10,000.00</span></div>
                 <div style="margin-top:5px;"><span style="font-size:9px; color:#666;">SIZE (USD)</span><input type="number" id="trade-size" class="t-input" value="1000"></div>
-                <div style="margin-top:5px; display:flex; gap:5px;">
+                
+                <div style="display:flex; gap:5px; margin-top:5px;">
                     <button class="btn-trade btn-buy" onclick="openPos('long')">LONG</button>
                     <button class="btn-trade btn-sell" onclick="openPos('short')">SHORT</button>
                 </div>
+                
                 <div id="pos-box" class="position-box">
                     <div style="display:flex; justify-content:space-between; color:#888;">
                         <span id="pos-side" style="font-weight:bold">LONG</span>
@@ -153,7 +171,7 @@
                     <button onclick="closePos()" style="width:100%; background:#333; border:none; color:#fff; cursor:pointer;">CLOSE</button>
                 </div>
             </div>
-            <div class="title"><span>ORDER BOOK</span><span>L2</span></div>
+            <div class="title"><span>ORDER BOOK</span><span>L2 HEATMAP</span></div>
             <div class="list">
                 <div id="asks" style="display:flex; flex-direction:column-reverse;"></div>
                 <div id="spread" style="text-align:center; color:#444; border-top:1px solid #222; border-bottom:1px solid #222; font-size:9px;">-</div>
@@ -215,17 +233,16 @@
                 </div>
 
                 <div class="defi-mod">
-                    <div class="mod-head">BRIDGE FLOWS (1H)</div>
-                    <div style="padding:10px; display:flex; flex-direction:column; gap:5px;">
-                        <div style="display:flex; align-items:center; gap:5px;">
-                            <span style="font-size:9px; width:30px;">ETH</span>
-                            <div style="flex:1; height:6px; background:#222;"><div style="width:80%; height:100%; background:linear-gradient(90deg, #333, var(--blue));"></div></div>
-                            <span style="font-size:9px; width:30px;">L2</span>
+                    <div class="mod-head">CATALYSTS & L2 WARS</div>
+                    <div style="display:flex; flex-direction:column; height:100%;">
+                        <div style="flex:1; border-bottom:1px solid #222; padding:5px;">
+                            <div style="font-size:9px; color:#aaa; margin-bottom:4px;">UPCOMING UNLOCKS (DUMP RISK)</div>
+                            <div id="unlocks-list"></div> 
                         </div>
-                        <div style="font-size:9px; text-align:center; color:#666;">NET INFLOW: <span style="color:var(--green)">+$12.4M</span></div>
-                        <div style="border-top:1px dashed #333; margin-top:5px; padding-top:5px;">
-                            <div style="font-size:9px; color:#aaa;">TOP DESTINATION: <span style="color:#fff">BASE</span></div>
-                            <div style="font-size:9px; color:#aaa;">TOP SOURCE: <span style="color:#fff">SOLANA</span></div>
+
+                        <div style="flex:1; padding:5px;">
+                            <div style="font-size:9px; color:#aaa; margin-bottom:4px;">LIVE SWAP COST (USD)</div>
+                            <div id="l2-list" style="display:flex; flex-direction:column; gap:2px;"></div>
                         </div>
                     </div>
                 </div>
@@ -271,6 +288,7 @@
             <span>24H: <span id="ft-chg">--</span></span>
         </div>
         <div style="display:flex; gap:10px;">
+            <button onclick="toggleSound()" style="background:none; border:1px solid #333; color:#666; cursor:pointer;">SOUND: OFF</button>
             <button onclick="resetApp()" style="background:none; border:1px solid #333; color:#666; cursor:pointer;">RESET</button>
         </div>
     </div>
@@ -278,9 +296,9 @@
 
     <script>
         // --- CORE & STATE ---
-        let state = { pair: 'btcusdt', wallet: 10000, pos: null, history: [] };
+        let state = { pair: 'btcusdt', wallet: 10000, pos: null, history: [], sound: false };
         const el = id => document.getElementById(id);
-        let ws = null;
+        let ws = null, audioCtx = null;
 
         // --- 1. TRADING ENGINE ---
         function openPos(side) {
@@ -293,17 +311,20 @@
             el('pos-entry').innerText = "@ " + price.toFixed(2);
             updateWallet();
             toast("EXEC", `${side.toUpperCase()} FILLED`);
+            playSound('success');
         }
         function closePos() {
             if(!state.pos) return;
             const price = parseFloat(el('ft-price').innerText);
-            const pnl = (price - state.pos.entry) / state.pos.entry * (state.pos.side==='long'?1:-1) * 20 * state.pos.size; // 20x Lev
+            // 20x Lev hardcoded for visual simulation
+            const pnl = (price - state.pos.entry) / state.pos.entry * (state.pos.side==='long'?1:-1) * 20 * state.pos.size; 
             state.wallet += pnl;
             state.history.unshift({t:new Date().toLocaleTimeString(), p:pnl});
             state.pos = null;
             el('pos-box').style.display = 'none';
             updateWallet();
             toast("EXEC", `CLOSED PNL: $${pnl.toFixed(2)}`);
+            playSound('ping');
         }
         function updateWallet() { el('wallet-bal').innerText = "$" + state.wallet.toLocaleString(undefined, {minimumFractionDigits:2}); }
 
@@ -318,7 +339,7 @@
                     const isDepeg = price < 0.9995;
                     html += `<div class="peg-row"><span>${s}</span><span class="${isDepeg?'depeg':''}" style="color:${price>=1?'var(--green)':'var(--red)'}">$${price}</span></div>`;
                 });
-                el('peg-list').innerHTML = html;
+                const elPeg = el('peg-list'); if(elPeg) elPeg.innerHTML = html;
             }, 2000);
 
             // B. Gas Heatmap
@@ -343,9 +364,59 @@
                 const div = document.createElement('div');
                 div.className = 'mev-item';
                 div.innerHTML = `SANDWICH ATK <span style="color:#666">${bot}</span> PROFIT: <span class="mev-profit">+$${profit}</span>`;
-                el('mev-feed').prepend(div);
-                if(el('mev-feed').children.length > 8) el('mev-feed').lastChild.remove();
+                const feed = el('mev-feed');
+                if(feed) {
+                    feed.prepend(div);
+                    if(feed.children.length > 8) feed.lastChild.remove();
+                }
             }, 1500);
+
+            // E. TOKEN UNLOCKS (NEW)
+            const unlocks = [
+                { t: 'ARB', amt: '$120M', time: 14500 },
+                { t: 'SUI', amt: '$34M', time: 3600 },
+                { t: 'OP', amt: '$12M', time: 89000 },
+                { t: 'APT', amt: '$250M', time: 500 }
+            ];
+            setInterval(() => {
+                let html = '';
+                unlocks.forEach(u => {
+                    u.time -= 1;
+                    if(u.time < 0) u.time = 50000;
+                    const h = Math.floor(u.time / 3600);
+                    const m = Math.floor((u.time % 3600) / 60);
+                    const s = Math.floor(u.time % 60);
+                    const isDanger = h < 1; 
+                    html += `
+                    <div style="display:flex; justify-content:space-between; font-size:10px; padding:2px 0;">
+                        <span><span style="font-weight:bold; color:#fff">${u.t}</span> <span style="font-size:9px; color:#666">(${u.amt})</span></span>
+                        <span style="font-family:monospace; color:${isDanger ? 'var(--red)' : 'var(--amber)'}">${h}h ${m}m ${s}s</span>
+                    </div>`;
+                });
+                const elUn = el('unlocks-list'); if(elUn) elUn.innerHTML = html;
+            }, 1000);
+
+            // F. L2 FEE WARS (NEW)
+            setInterval(() => {
+                const ethCost = (2 + Math.random() * 6);
+                const l2s = [
+                    { n: 'ETH (L1)', val: ethCost, col: '#666' },
+                    { n: 'ARB', val: ethCost * 0.05, col: '#2962ff' },
+                    { n: 'OP', val: ethCost * 0.07, col: '#ff0000' },
+                    { n: 'BASE', val: ethCost * 0.01, col: '#0052ff' }
+                ];
+                let html = '';
+                l2s.forEach(chain => {
+                    const width = (chain.val / ethCost) * 100;
+                    html += `
+                    <div style="display:flex; align-items:center; justify-content:space-between; font-size:9px; margin-bottom:2px;">
+                        <span style="width:40px; color:${chain.col}">${chain.n}</span>
+                        <div class="l2-bar-bg"><div class="l2-bar-fill" style="width:${Math.max(1, width)}%; background:${chain.col}"></div></div>
+                        <span style="color:#fff; width:35px; text-align:right;">$${chain.val.toFixed(2)}</span>
+                    </div>`;
+                });
+                const elL2 = el('l2-list'); if(elL2) elL2.innerHTML = html;
+            }, 2000);
         }
 
         // --- 3. TOOLS ---
@@ -368,7 +439,6 @@
             const curr = parseFloat(el('il-curr').value);
             if(!ent || !curr) return;
             const ratio = curr / ent;
-            // IL Formula: 2 * sqrt(ratio) / (1 + ratio) - 1
             const il = (2 * Math.sqrt(ratio) / (1 + ratio)) - 1;
             el('il-result').innerText = (il * 100).toFixed(2) + "%";
         }
@@ -388,6 +458,7 @@
             state.pair = p.toLowerCase();
             el('pair-disp').innerText = p.toUpperCase();
             startStream(); initTV();
+            toast("SYSTEM", `SWITCHED TO ${p.toUpperCase()}`);
         }
 
         function startStream() {
@@ -401,13 +472,16 @@
                 if(type === 'trade') {
                     const d = msg.data;
                     const row = `<div class="row"><span style="color:#555">${new Date().toLocaleTimeString()}</span><span style="color:${d.m?'var(--red)':'var(--green)'}">${parseFloat(d.p).toFixed(2)}</span><span>${parseFloat(d.q).toFixed(4)}</span></div>`;
-                    el('tape').insertAdjacentHTML('afterbegin', row);
-                    if(el('tape').children.length > 30) el('tape').lastChild.remove();
+                    const tape = el('tape');
+                    if(tape) {
+                        tape.insertAdjacentHTML('afterbegin', row);
+                        if(tape.children.length > 30) tape.lastChild.remove();
+                    }
                     
-                    // Update News Simulation
-                    if(Math.random() > 0.98) {
+                    if(Math.random() > 0.99) {
                         const news = `<div style="border-bottom:1px solid #222; padding:3px; font-size:9px; color:#aaa;">[AI] VOLUME SPIKE DETECTED ON ${state.pair.toUpperCase()}</div>`;
-                        el('news-feed').insertAdjacentHTML('afterbegin', news);
+                        const nFeed = el('news-feed');
+                        if(nFeed) nFeed.insertAdjacentHTML('afterbegin', news);
                     }
                 }
                 if(type === 'ticker') {
@@ -445,6 +519,22 @@
             el('history-list').innerHTML = state.history.map(h=>`<div class="row"><span>${h.t}</span><span>PNL: ${h.p.toFixed(2)}$</span></div>`).join('');
         }
         function resetApp() { if(confirm("Reset?")) location.reload(); }
+        
+        function toggleSound() {
+            state.sound = !state.sound;
+            event.target.innerText = state.sound ? "SOUND: ON" : "SOUND: OFF";
+            if(state.sound) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); toast("AUDIO", "Sound FX Enabled"); }
+        }
+        function playSound(type) {
+            if(!state.sound || !audioCtx) return;
+            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            o.connect(g); g.connect(audioCtx.destination);
+            o.type = type === 'ping' ? 'sine' : 'triangle';
+            o.frequency.setValueAtTime(type==='ping'?800:400, audioCtx.currentTime);
+            o.frequency.exponentialRampToValueAtTime(type==='ping'?400:800, audioCtx.currentTime + 0.1);
+            g.gain.setValueAtTime(0.1, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            o.start(); o.stop(audioCtx.currentTime + 0.1);
+        }
 
         // BOOT
         setInterval(() => el('clock').innerText = new Date().toISOString().split('T')[1].split('.')[0] + ' UTC', 1000);
