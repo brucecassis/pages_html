@@ -3,378 +3,465 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLOOMBERG ENS® - ULTRA TERMINAL</title>
+    <title>BLOOMBERG ENS® - ULTIMATE TRADER v8</title>
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
-        :root { --bg: #000; --amber: #ffaa00; --dim: #666; --green: #0f0; --red: #f00; --border: #333; --panel: #0a0a0a; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', monospace; scrollbar-width: none; }
+        :root { --bg: #000; --amber: #ffaa00; --dim: #666; --green: #0f0; --red: #f00; --liq: #d900ff; --border: #333; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', monospace; user-select: none; }
         body { background: var(--bg); color: var(--amber); height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-size: 10px; }
         
-        /* 1. GLOBAL TICKER */
+        /* SCROLLBARS */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #333; }
+
+        /* ANIMATIONS */
+        @keyframes flash { 0% { background-color: #333; } 100% { background-color: transparent; } }
+        .flash-up { animation: flash 0.5s; color: var(--green); }
+        .flash-down { animation: flash 0.5s; color: var(--red); }
+        .flash-liq { animation: flash 1s; background-color: rgba(217, 0, 255, 0.2); color: var(--liq); font-weight: bold; }
+
+        /* TICKER */
         .ticker-wrap { width: 100%; overflow: hidden; background: #111; border-bottom: 1px solid var(--amber); white-space: nowrap; padding: 4px 0; }
-        .ticker { display: inline-block; animation: ticker 30s linear infinite; }
+        .ticker { display: inline-block; animation: ticker 40s linear infinite; }
         @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-        .tick-item { margin-right: 20px; font-weight: bold; }
-        .tick-up { color: var(--green); } .tick-down { color: var(--red); }
+        .tick-item { margin-right: 25px; font-weight: bold; cursor: pointer; }
+        .tick-item:hover { color: #fff; text-decoration: underline; }
 
         /* HEADER */
         .header { background: var(--amber); color: #000; padding: 2px 10px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        
+        .funding { background: #000; color: var(--amber); padding: 1px 6px; border-radius: 2px; font-size: 9px; }
+
         /* LAYOUT */
-        .grid { display: grid; grid-template-columns: 220px 1fr 260px; grid-template-rows: 30px 1fr 160px; gap: 1px; background: var(--border); flex-grow: 1; }
+        .grid { display: grid; grid-template-columns: 240px 1fr 280px; grid-template-rows: 30px 1fr 160px; gap: 1px; background: var(--border); flex-grow: 1; }
         .panel { background: var(--bg); display: flex; flex-direction: column; overflow: hidden; position: relative; }
         .title { background: #111; padding: 3px 5px; border-bottom: 1px solid var(--border); color: var(--dim); font-weight: bold; display: flex; justify-content: space-between; font-size: 9px; }
 
-        /* 2. WATCHLIST */
-        .watchlist-item { padding: 4px 8px; border-bottom: 1px solid #222; cursor: pointer; display: flex; justify-content: space-between; }
-        .watchlist-item:hover { background: #222; color: #fff; }
-        .wl-symbol { font-weight: bold; }
+        /* TABS */
+        .tabs-bar { grid-column: span 3; background: #000; display: flex; align-items: center; border-bottom: 1px solid var(--border); padding: 0 10px; gap: 2px; }
+        .tab-btn { background: #111; border: 1px solid #333; color: #666; padding: 3px 10px; cursor: pointer; font-size: 9px; min-width: 60px; }
+        .tab-btn:hover { color: #fff; }
+        .tab-btn.active { background: var(--amber); color: #000; border-color: var(--amber); font-weight: bold; }
+        .tab-spacer { flex-grow: 1; }
+        .pair-badge { color: var(--amber); font-weight: bold; font-size: 11px; padding-right: 10px; }
+
+        /* PAPER TRADING PANEL */
+        .trade-panel { padding: 10px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid #333; }
+        .wallet-row { display: flex; justify-content: space-between; color: #888; font-size: 9px; }
+        .wallet-val { color: #fff; font-weight: bold; }
+        .trade-inputs { display: flex; gap: 5px; }
+        .t-input { background: #111; border: 1px solid #333; color: #fff; padding: 4px; width: 100%; text-align: right; font-weight: bold; }
+        .btn-row { display: flex; gap: 5px; }
+        .btn-trade { flex: 1; padding: 6px; border: none; cursor: pointer; font-weight: bold; color: #000; opacity: 0.9; }
+        .btn-buy { background: var(--green); } .btn-sell { background: var(--red); }
+        .btn-trade:hover { opacity: 1; transform: scale(0.98); }
+        .btn-trade:active { transform: scale(0.95); }
         
-        /* 6. TIMEFRAMES */
-        .tf-bar { grid-column: span 3; background: #000; display: flex; align-items: center; border-bottom: 1px solid var(--border); padding: 0 10px; gap: 10px; }
-        .tf-btn { background: #222; border: 1px solid #444; color: #888; padding: 2px 8px; cursor: pointer; font-size: 9px; }
-        .tf-btn:hover, .tf-btn.active { background: var(--amber); color: #000; border-color: var(--amber); }
+        .position-box { background: #111; border: 1px solid #333; padding: 5px; display: none; margin-top: 5px; }
+        .pos-header { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 9px; color: #666; }
+        .pnl-disp { font-size: 14px; font-weight: bold; text-align: center; margin: 5px 0; }
+        .btn-close { width: 100%; background: #333; color: #fff; border: 1px solid #555; cursor: pointer; padding: 2px; font-size: 9px; }
+        .btn-close:hover { background: #555; }
 
-        /* 3. WHALE ALERT (TAPE) */
-        .list { overflow: hidden; flex-grow: 1; }
-        .row { display: flex; justify-content: space-between; padding: 1px 5px; font-size: 10px; }
-        .whale { background: rgba(255, 170, 0, 0.2); font-weight: bold; border-left: 2px solid var(--amber); }
-        .g { color: var(--green); } .r { color: var(--red); }
-
-        /* 5. CALCULATOR */
-        .calc-box { padding: 10px; display: flex; flex-direction: column; gap: 5px; }
-        .calc-input { background: #111; border: 1px solid #333; color: var(--amber); padding: 4px; width: 100%; text-align: right; }
-        .calc-res { text-align: right; font-weight: bold; font-size: 12px; }
-
-        /* 7. RANGE BAR */
-        .range-container { padding: 5px 10px; display: flex; align-items: center; gap: 5px; font-size: 9px; color: #888; }
-        .range-bar { flex-grow: 1; height: 4px; background: #222; position: relative; border-radius: 2px; }
-        .range-fill { height: 100%; background: linear-gradient(90deg, var(--red), var(--amber), var(--green)); width: 0%; transition: width 0.5s; }
-        .range-cursor { position: absolute; top: -3px; width: 2px; height: 10px; background: #fff; transition: left 0.5s; }
-
-        /* 9. VISUAL DEPTH */
-        .ob-row { position: relative; display: flex; justify-content: space-between; padding: 1px 5px; }
-        .ob-bg { position: absolute; top: 0; bottom: 0; right: 0; opacity: 0.15; z-index: 0; }
-        .ob-ask .ob-bg { background: var(--red); } .ob-bid .ob-bg { background: var(--green); }
-        .ob-val { position: relative; z-index: 1; }
-
-        /* 10. FULLSCREEN & FOOTER */
+        /* LISTS */
+        .list { overflow-y: auto; flex-grow: 1; }
+        .row { display: flex; justify-content: space-between; padding: 1px 6px; font-size: 10px; border-bottom: 1px solid #080808; }
+        .whale { color: var(--amber); font-weight: bold; background: rgba(255, 170, 0, 0.1); }
+        .rekt { color: var(--liq); font-weight: bold; text-shadow: 0 0 5px var(--liq); }
+        
+        /* STATS & FOOTER */
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px; }
+        .box { border: 1px solid var(--border); padding: 5px; display: flex; flex-direction: column; justify-content: center; }
+        .s-lbl { color: #666; font-size: 8px; text-transform: uppercase; }
+        .s-val { font-size: 12px; font-weight: bold; }
+        
         .foot { background: #111; border-top: 1px solid #333; padding: 2px 10px; color: var(--dim); display: flex; justify-content: space-between; font-size: 9px; align-items: center; }
-        .btn-fs { background: transparent; border: 1px solid #444; color: #888; cursor: pointer; padding: 0 4px; }
-        
+        .btn-fs { background: transparent; border: 1px solid #444; color: #888; cursor: pointer; padding: 0 6px; }
+
         #tv-container, #gauge-container { width: 100%; height: 100%; }
-        /* Cacher le copyright TV si possible ou l'intégrer proprement */
-        .tradingview-widget-copyright { display: none !important; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
     <div class="ticker-wrap">
-        <div class="ticker" id="global-ticker">LOADING MARKET DATA...</div>
+        <div class="ticker" id="global-ticker">INITIALIZING MARKET DATA STREAM...</div>
     </div>
 
     <div class="header">
-        <span>BLOOMBERG ENS TERMINAL v7.0</span>
-        <span id="time">--:--:-- UTC</span>
+        <span>BLOOMBERG ENS TERMINAL v8.0 [ULTIMATE]</span>
+        <div style="display:flex; gap:15px; align-items:center;">
+            <span class="funding">FUNDING: <span id="funding-rate">--%</span></span>
+            <span id="time">--:--:-- UTC</span>
+        </div>
     </div>
 
     <div class="grid">
-        <div class="tf-bar">
-            <span>PERIOD:</span>
-            <button class="tf-btn active" onclick="changeTf('1')">1M</button>
-            <button class="tf-btn" onclick="changeTf('15')">15M</button>
-            <button class="tf-btn" onclick="changeTf('60')">1H</button>
-            <button class="tf-btn" onclick="changeTf('240')">4H</button>
-            <button class="tf-btn" onclick="changeTf('D')">1D</button>
-            <span style="margin-left:auto; color:#444">CMD: <span id="current-pair-disp" style="color:var(--amber)">BTCUSDT</span></span>
+        <div class="tabs-bar">
+            <span class="pair-badge" id="current-pair-disp">BTCUSDT</span>
+            <button class="tab-btn active" onclick="setTab('chart')">CHART</button>
+            <button class="tab-btn" onclick="setTab('depth')">DEPTH</button>
+            <button class="tab-btn" onclick="setTab('news')">NEWS</button>
+            <div class="tab-spacer"></div>
+            <button class="tab-btn" onclick="changeTf('1')">1m</button>
+            <button class="tab-btn" onclick="changeTf('15')">15m</button>
+            <button class="tab-btn" onclick="changeTf('60')">1H</button>
+            <button class="tab-btn" onclick="changeTf('240')">4H</button>
         </div>
 
         <div class="panel" style="grid-row: span 2;">
-            <div class="title"><span>MARKET WATCH</span><span>SELECT</span></div>
-            <div id="watchlist" class="list" style="flex-grow: 0; max-height: 200px; border-bottom: 1px solid #333;"></div>
             
-            <div class="title"><span>CALCULATOR</span><span>USD &#8644; COIN</span></div>
-            <div class="calc-box">
-                <div>USD AMOUNT:</div>
-                <input type="number" id="calc-usd" class="calc-input" placeholder="1000" oninput="calcPosition()">
-                <div>COIN AMOUNT:</div>
-                <div id="calc-res" class="calc-res">0.000000</div>
+            <div class="title"><span style="color:var(--green)">PAPER TRADING (SIM)</span><span>WALLET</span></div>
+            <div class="trade-panel">
+                <div class="wallet-row"><span>BALANCE</span><span class="wallet-val" id="wallet-bal">$10,000.00</span></div>
+                <div class="trade-inputs">
+                    <input type="number" id="trade-size" class="t-input" placeholder="SIZE (USD)" value="1000">
+                </div>
+                <div class="btn-row">
+                    <button class="btn-trade btn-buy" onclick="openPosition('long')">BUY / LONG</button>
+                    <button class="btn-trade btn-sell" onclick="openPosition('short')">SELL / SHORT</button>
+                </div>
+                <div id="position-box" class="position-box">
+                    <div class="pos-header">
+                        <span id="pos-side">LONG</span>
+                        <span>ENTRY: <span id="pos-entry">--</span></span>
+                    </div>
+                    <div class="pnl-disp" id="pos-pnl">$0.00</div>
+                    <button class="btn-close" onclick="closePosition()">CLOSE POSITION</button>
+                </div>
             </div>
 
+            <div class="title"><span>MARKET WATCH</span><span>SELECT</span></div>
+            <div id="watchlist" class="list" style="max-height: 250px;"></div>
+
             <div class="title"><span>ORDER BOOK</span><span>DEPTH</span></div>
-            <div class="list" style="display:flex; flex-direction:column;">
-                <div id="asks" style="flex:1; display:flex; flex-direction:column-reverse;"></div>
-                <div id="spread" style="text-align:center; color:#444; padding:2px; border-top:1px solid #222; border-bottom:1px solid #222;">---</div>
-                <div id="bids" style="flex:1;"></div>
+            <div class="list">
+                <div id="asks" style="display:flex; flex-direction:column-reverse;"></div>
+                <div id="spread" style="text-align:center; color:#444; border-top:1px solid #222; border-bottom:1px solid #222;">-</div>
+                <div id="bids"></div>
             </div>
         </div>
 
         <div class="panel" style="grid-row: span 2;">
             <div id="tv-container"></div>
-            
-            <div class="range-container" style="background: #080808; border-top: 1px solid #333; height: 30px;">
-                <span>LOW: <span id="range-low">--</span></span>
-                <div class="range-bar">
-                    <div class="range-fill" id="range-fill"></div>
-                    <div class="range-cursor" id="range-cursor"></div>
-                </div>
-                <span>HIGH: <span id="range-high">--</span></span>
-            </div>
-        </div>
+            <div id="gauge-container" class="hidden"></div> </div>
 
         <div class="panel">
-            <div class="title"><span>TAPE (WHALE > $50k)</span><span>TRADES</span></div>
+            <div class="title"><span>TAPE & LIQUIDATIONS</span><span>REAL-TIME</span></div>
             <div id="tape" class="list"></div>
         </div>
         
         <div class="panel">
-            <div class="title"><span>TECH GAUGE</span><span>SENTIMENT</span></div>
-            <div id="gauge-container"></div>
+            <div class="title"><span>SENTIMENT</span><span>TECH</span></div>
+            <div id="mini-gauge" style="flex:1"></div>
+        </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr; grid-template-rows: 1fr; min-height: 60px; background:var(--bg); flex-grow:0;">
+        <div class="stats">
+            <div class="box"><span class="s-lbl">24H HIGH</span><span class="s-val" id="high">--</span></div>
+            <div class="box"><span class="s-lbl">24H LOW</span><span class="s-val" id="low">--</span></div>
+            <div class="box"><span class="s-lbl">VOLUME</span><span class="s-val" id="vol">--</span></div>
+            <div class="box"><span class="s-lbl">CHANGE</span><span class="s-val" id="chg">--</span></div>
         </div>
     </div>
 
     <div class="foot">
-        <div style="display:flex; gap:15px;">
-            <span id="status">● SYSTEM READY</span>
+        <div style="display:flex; gap:15px; align-items:center;">
+            <span id="status" style="color:var(--green)">● SYSTEM ONLINE</span>
             <span id="ping">PING: --ms</span>
+            <span style="color:var(--dim)">| SOUND FX: CLICK TO ENABLE</span>
         </div>
-        <button class="btn-fs" onclick="toggleFullScreen()">[ FULLSCREEN ]</button>
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="cmd-input" style="background:#000; border:1px solid #333; color:var(--amber); width:100px; text-transform:uppercase; text-align:center;" placeholder="COMMAND...">
+            <button class="btn-fs" onclick="toggleFs()">[ FS ]</button>
+        </div>
     </div>
 
     <script>
-        // --- CONFIG ---
-        let ws = null;
-        let tickerWs = null;
+        // --- CORE CONFIG ---
+        let ws = null, tickerWs = null;
         let currentPair = 'btcusdt';
         let currentPrice = 0;
         let currentTimeframe = '1';
-        let lastPingTime = Date.now();
+        let audioCtx = null; // Pour le son
         
+        // --- PAPER TRADING STATE ---
+        let wallet = 10000;
+        let position = null; // { side: 'long'/'short', entry: 0, size: 0 (usd), amount: 0 (coin) }
+
         const el = id => document.getElementById(id);
         const log = msg => el('status').innerText = "● " + msg;
-
-        // FAVORIS
-        const favorites = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT', 'ADAUSDT', 'AVAXUSDT'];
 
         // HORLOGE
         setInterval(() => el('time').innerText = new Date().toISOString().split('T')[1].split('.')[0] + ' UTC', 1000);
 
-        // --- 1. GLOBAL TICKER (TOP) ---
-        function startGlobalTicker() {
-            if(tickerWs) tickerWs.close();
-            // Flux "MiniTicker" pour tous les marchés
-            tickerWs = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
+        // --- 1. AUDIO ENGINE (Sonar) ---
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        function playSonar() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.2);
+        }
+        document.body.addEventListener('click', initAudio); // Activation au clic
+
+        // --- 2. PAPER TRADING LOGIC ---
+        function openPosition(side) {
+            if (position) return alert("Close current position first!");
+            const sizeUsd = parseFloat(el('trade-size').value);
+            if (sizeUsd > wallet) return alert("Insufficient funds!");
+            if (currentPrice === 0) return alert("Waiting for price data...");
+
+            // Fee fictive de 0.1%
+            const fee = sizeUsd * 0.001;
+            wallet -= fee;
             
+            position = {
+                side: side,
+                entry: currentPrice,
+                size: sizeUsd,
+                amount: sizeUsd / currentPrice
+            };
+            
+            el('position-box').style.display = 'block';
+            el('pos-side').innerText = side.toUpperCase();
+            el('pos-side').style.color = side === 'long' ? 'var(--green)' : 'var(--red)';
+            el('pos-entry').innerText = currentPrice.toFixed(2);
+            updateWalletUI();
+        }
+
+        function closePosition() {
+            if (!position) return;
+            const pnl = getPnl();
+            wallet += pnl;
+            position = null;
+            el('position-box').style.display = 'none';
+            updateWalletUI();
+        }
+
+        function getPnl() {
+            if (!position) return 0;
+            const diff = currentPrice - position.entry;
+            // Long: (Prix - Entry) * Amount
+            // Short: (Entry - Prix) * Amount
+            let val = position.side === 'long' ? diff : -diff;
+            return val * position.amount;
+        }
+
+        function updateWalletUI() {
+            el('wallet-bal').innerText = "$" + wallet.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+
+        function updatePnlDisplay() {
+            if (!position) return;
+            const pnl = getPnl();
+            const elPnl = el('pos-pnl');
+            elPnl.innerText = (pnl >= 0 ? "+" : "") + "$" + pnl.toFixed(2);
+            elPnl.style.color = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+        }
+
+        // --- 3. STREAMING ENGINE ---
+        function startStream(pair) {
+            if (ws) ws.close();
+            log("SYNC " + pair.toUpperCase());
+            
+            // Flux: Depth, Trade, Ticker, MarkPrice (pour funding), ForceOrder (Liquidations)
+            const streams = [
+                `${pair}@depth10`, 
+                `${pair}@trade`, 
+                `${pair}@ticker`,
+                `${pair}@markPrice@1s`,
+                `${pair}@forceOrder`
+            ].join('/');
+
+            ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
+
+            ws.onopen = () => { el('status').style.color = "#0f0"; };
+            ws.onmessage = (evt) => {
+                const msg = JSON.parse(evt.data);
+                const data = msg.data;
+                const type = msg.stream.split('@')[1];
+
+                if (type === 'trade') handleTrade(data);
+                if (type === 'depth10') handleDepth(data);
+                if (type === 'ticker') handleTicker(data);
+                if (type === 'markPrice') handleMarkPrice(data);
+                if (type === 'forceOrder') handleLiquidation(data);
+            };
+        }
+
+        function handleTrade(data) {
+            currentPrice = parseFloat(data.p);
+            const size = parseFloat(data.q);
+            const usdVal = currentPrice * size;
+            
+            // P&L Live update
+            updatePnlDisplay();
+
+            // Tape Logic
+            const row = document.createElement('div');
+            row.className = 'row';
+            let styleClass = data.m ? 'r' : 'g'; // Sell or Buy
+            let icon = '';
+
+            // WHALE DETECTOR (> 50k$)
+            if (usdVal > 50000) {
+                row.classList.add('whale');
+                icon = '🐋 ';
+                playSonar(); // SOUND FX
+            }
+
+            row.innerHTML = `
+                <span style="color:#666">${new Date(data.T).toLocaleTimeString().split(' ')[0]}</span>
+                <span class="${styleClass}">${icon}${currentPrice.toFixed(2)}</span>
+                <span style="color:#888">${size.toFixed(4)}</span>
+            `;
+            const tape = el('tape');
+            tape.prepend(row);
+            if (tape.children.length > 30) tape.lastChild.remove();
+        }
+
+        function handleLiquidation(data) {
+            // REKTOMETER Logic
+            const o = data.o; // Order info
+            const row = document.createElement('div');
+            row.className = 'row flash-liq';
+            const side = o.S === 'SELL' ? 'LONG REKT' : 'SHORT REKT'; // Sell order = Long liquidation
+            row.innerHTML = `
+                <span>☠️ ${side}</span>
+                <span>$${parseFloat(o.p).toFixed(2)}</span>
+                <span>VOL: ${parseFloat(o.q).toFixed(3)}</span>
+            `;
+            el('tape').prepend(row);
+        }
+
+        function handleDepth(data) {
+            renderBook(data.asks, el('asks'), 'r', true);
+            renderBook(data.bids, el('bids'), 'g', false);
+            const spread = parseFloat(data.asks[0][0]) - parseFloat(data.bids[0][0]);
+            el('spread').innerText = spread.toFixed(2);
+        }
+
+        function renderBook(list, container, cls, rev) {
+            container.innerHTML = '';
+            const arr = rev ? list.slice(0,10).reverse() : list.slice(0,10);
+            arr.forEach(i => {
+                const d = document.createElement('div');
+                d.className = 'row';
+                d.innerHTML = `<span class="${cls}">${parseFloat(i[0]).toFixed(2)}</span><span>${parseFloat(i[1]).toFixed(4)}</span>`;
+                container.appendChild(d);
+            });
+        }
+
+        function handleTicker(data) {
+            el('high').innerText = parseFloat(data.h).toFixed(2);
+            el('low').innerText = parseFloat(data.l).toFixed(2);
+            el('vol').innerText = Math.floor(data.v);
+            const chg = parseFloat(data.P);
+            el('chg').innerText = chg.toFixed(2) + "%";
+            el('chg').style.color = chg >= 0 ? 'var(--green)' : 'var(--red)';
+        }
+
+        function handleMarkPrice(data) {
+            // Funding Rate (r) est en décimal (ex: 0.0001 = 0.01%)
+            const rate = parseFloat(data.r) * 100;
+            el('funding-rate').innerText = rate.toFixed(4) + "%";
+            el('funding-rate').style.color = rate > 0 ? 'var(--green)' : 'var(--red)';
+        }
+
+        // --- 4. GLOBAL TICKER ---
+        function startGlobalTicker() {
+            tickerWs = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
             tickerWs.onmessage = (evt) => {
                 const data = JSON.parse(evt.data);
-                // On filtre pour ne garder que les gros (ceux qui finissent par USDT et sont dans une liste arbitraire)
-                const majorCoins = data.filter(c => c.s.endsWith('USDT') && parseFloat(c.q) > 10000000).slice(0, 15);
-                
+                const tops = data.filter(c => c.s.endsWith('USDT')).sort((a,b) => parseFloat(b.q)-parseFloat(a.q)).slice(0, 15);
                 let html = '';
-                majorCoins.forEach(c => {
-                    const symbol = c.s.replace('USDT','');
-                    const change = parseFloat(c.P || 0).toFixed(2); // P = percent change
-                    const color = change >= 0 ? 'tick-up' : 'tick-down';
-                    html += `<span class="tick-item">${symbol} <span class="${color}">${parseFloat(c.c).toFixed(2)} (${change}%)</span></span>`;
+                tops.forEach(c => {
+                    const chg = parseFloat(c.P).toFixed(2);
+                    const col = chg >= 0 ? 'var(--green)' : 'var(--red)';
+                    html += `<span class="tick-item" onclick="changePair('${c.s}')">${c.s.replace('USDT','')} <span style="color:${col}">${parseFloat(c.c).toFixed(2)}</span></span>`;
                 });
                 el('global-ticker').innerHTML = html;
             };
         }
 
-        // --- 2. WATCHLIST GENERATOR ---
-        function initWatchlist() {
-            const container = el('watchlist');
-            container.innerHTML = '';
-            favorites.forEach(pair => {
-                const div = document.createElement('div');
-                div.className = 'watchlist-item';
-                div.innerHTML = `<span class="wl-symbol">${pair.replace('USDT','')}</span><span id="wl-price-${pair}">--</span>`;
-                div.onclick = () => changePair(pair);
-                container.appendChild(div);
-            });
-        }
-
-        // --- MAIN WEBSOCKET (Book, Tape, Range) ---
-        function startStream(pair) {
-            if (ws) ws.close();
-            log("SYNCING " + pair + "...");
-            
-            const streams = [`${pair}@depth10`, `${pair}@trade`, `${pair}@ticker`].join('/');
-            ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
-
-            ws.onopen = () => { log("STREAM ACTIVE"); el('status').style.color = "#0f0"; };
-            
-            // 8. LATENCY CHECK
-            ws.onping = () => { ws.pong(); }; // Keep alive
-
-            ws.onmessage = (evt) => {
-                // Latency sim (diff between now and packet processing)
-                const now = Date.now();
-                if(Math.random() > 0.9) el('ping').innerText = `PING: ${now - lastPingTime}ms`;
-                lastPingTime = now;
-
-                const msg = JSON.parse(evt.data);
-                const data = msg.data;
-                const type = msg.stream.split('@')[1];
-
-                if (type === 'trade') updateTape(data);
-                if (type === 'depth10') updateBook(data);
-                if (type === 'ticker') updateRange(data);
-            };
-        }
-
-        // --- UI UPDATERS ---
-
-        function updateTape(data) {
-            currentPrice = parseFloat(data.p);
-            
-            // Mise à jour prix dans watchlist
-            const wlEl = el(`wl-price-${currentPair.toUpperCase()}`);
-            if(wlEl) wlEl.innerText = currentPrice.toFixed(2);
-
-            const row = document.createElement('div');
-            row.className = 'row';
-            
-            // 3. WHALE DETECTOR LOGIC
-            const valueUSD = parseFloat(data.p) * parseFloat(data.q);
-            if (valueUSD > 50000) row.classList.add('whale'); // Seuil de baleine
-
-            row.innerHTML = `
-                <span style="color:#555">${new Date(data.T).toLocaleTimeString().split(' ')[0]}</span>
-                <span class="${data.m?'r':'g'}">${parseFloat(data.p).toFixed(2)}</span>
-                <span style="color:#666">${parseFloat(data.q).toFixed(4)}</span>
-            `;
-            el('tape').prepend(row);
-            if (el('tape').children.length > 25) el('tape').lastChild.remove();
-            
-            // Trigger calculator update
-            calcPosition();
-        }
-
-        function updateBook(data) {
-            renderList(data.asks, el('asks'), 'ob-ask', true);
-            renderList(data.bids, el('bids'), 'ob-bid', false);
-            el('spread').innerText = (parseFloat(data.asks[0][0]) - parseFloat(data.bids[0][0])).toFixed(2);
-        }
-
-        function renderList(list, container, type, reverse) {
-            container.innerHTML = '';
-            const arr = reverse ? list.slice(0,12).reverse() : list.slice(0,12);
-            arr.forEach(i => {
-                const d = document.createElement('div');
-                d.className = `ob-row ${type}`;
-                const price = parseFloat(i[0]).toFixed(2);
-                const size = parseFloat(i[1]).toFixed(4);
-                // 9. VISUAL DEPTH BAR
-                const width = Math.min(size * 20, 100); 
-                d.innerHTML = `<div class="ob-bg" style="width:${width}%"></div><span class="ob-val ${type==='ob-ask'?'r':'g'}">${price}</span><span class="ob-val" style="color:#444">${size}</span>`;
-                container.appendChild(d);
-            });
-        }
-
-        // 7. RANGE BAR UPDATER
-        function updateRange(data) {
-            const high = parseFloat(data.h);
-            const low = parseFloat(data.l);
-            const cur = parseFloat(data.c);
-            
-            el('range-high').innerText = high.toFixed(2);
-            el('range-low').innerText = low.toFixed(2);
-            
-            // Calcul pourcentage position
-            const pct = ((cur - low) / (high - low)) * 100;
-            el('range-fill').style.width = `${Math.max(0, Math.min(100, pct))}%`;
-            el('range-cursor').style.left = `${Math.max(0, Math.min(100, pct))}%`;
-        }
-
-        // 5. POSITION CALCULATOR
-        function calcPosition() {
-            const usd = parseFloat(el('calc-usd').value) || 0;
-            if (currentPrice > 0) {
-                el('calc-res').innerText = (usd / currentPrice).toFixed(6) + " " + currentPair.replace('usdt','').toUpperCase();
-            }
-        }
-
-        // --- WIDGETS ---
-        
-        function loadTvWidget() {
-            el('tv-container').innerHTML = "";
+        // --- 5. WIDGETS ---
+        function loadTv() {
+            el('tv-container').innerHTML = '';
             new TradingView.widget({
-                "autosize": true,
-                "symbol": "BINANCE:" + currentPair.toUpperCase(),
-                "interval": currentTimeframe,
-                "timezone": "Etc/UTC",
-                "theme": "dark",
-                "style": "1",
-                "locale": "fr",
-                "toolbar_bg": "#000000",
-                "enable_publishing": false,
-                "hide_top_toolbar": false,
-                "hide_side_toolbar": false, // On garde les outils de dessin
-                "container_id": "tv-container",
-                "overrides": {
-                    "paneProperties.background": "#000000",
-                    "paneProperties.vertGridProperties.color": "#111",
-                    "paneProperties.horzGridProperties.color": "#111",
-                }
+                "autosize": true, "symbol": "BINANCE:" + currentPair.toUpperCase(), "interval": currentTimeframe,
+                "timezone": "Etc/UTC", "theme": "dark", "style": "1", "locale": "fr", "toolbar_bg": "#000",
+                "enable_publishing": false, "container_id": "tv-container", "hide_side_toolbar": false,
+                "overrides": { "paneProperties.background": "#000000", "paneProperties.vertGridProperties.color": "#111", "paneProperties.horzGridProperties.color": "#111" }
+            });
+        }
+        function loadMiniGauge() {
+            // Petite jauge pour le panel bas droit
+            el('mini-gauge').innerHTML = '';
+            const s = document.createElement('script');
+            s.src = "https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js";
+            s.async = true;
+            s.innerHTML = JSON.stringify({
+                "interval": "1m", "width": "100%", "isTransparent": true, "height": "100%",
+                "symbol": "BINANCE:" + currentPair.toUpperCase(), "showIntervalTabs": false, "locale": "fr", "colorTheme": "dark"
+            });
+            el('mini-gauge').appendChild(s);
+        }
+
+        // --- UTILS ---
+        function initWatchlist() {
+            const favs = ['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','XRPUSDT','DOGEUSDT'];
+            el('watchlist').innerHTML = '';
+            favs.forEach(p => {
+                const d = document.createElement('div');
+                d.className = 'row watchlist-item';
+                d.style.cursor = 'pointer';
+                d.innerHTML = `<span style="font-weight:bold">${p.replace('USDT','')}</span><span>USDT</span>`;
+                d.onclick = () => changePair(p);
+                el('watchlist').appendChild(d);
             });
         }
 
-        // 4. TECH GAUGE
-        function loadGauge() {
-            el('gauge-container').innerHTML = "";
-            // Le widget gauge est un peu capricieux en JS pur, on utilise une iframe générée
-            // Note: C'est une astuce car l'API JS native pour la gauge est complexe
-            const script = document.createElement('script');
-            script.src = "https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js";
-            script.async = true;
-            script.innerHTML = JSON.stringify({
-                "interval": "1m",
-                "width": "100%",
-                "isTransparent": true,
-                "height": "100%",
-                "symbol": "BINANCE:" + currentPair.toUpperCase(),
-                "showIntervalTabs": false,
-                "locale": "fr",
-                "colorTheme": "dark"
-            });
-            el('gauge-container').appendChild(script);
-        }
-
-        // --- CONTROLS ---
-
-        function changePair(pair) {
-            currentPair = pair.toLowerCase();
-            el('current-pair-disp').innerText = pair.toUpperCase();
-            el('tape').innerHTML = ""; // Clear tape
+        function changePair(p) {
+            currentPair = p.toLowerCase();
+            el('current-pair-disp').innerText = p.toUpperCase();
             startStream(currentPair);
-            loadTvWidget();
-            loadGauge();
+            loadTv();
+            loadMiniGauge();
         }
-
-        function changeTf(tf) {
-            currentTimeframe = tf;
-            // Update buttons
-            document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            loadTvWidget(); // Reload chart with new TF
+        function changeTf(tf) { currentTimeframe = tf; loadTv(); }
+        function setTab(tab) {
+             if(tab === 'chart') { el('tv-container').classList.remove('hidden'); el('gauge-container').classList.add('hidden'); }
+             if(tab === 'depth') { alert("View already integrated in left panel"); } // Simplified for this demo
+             if(tab === 'news') { alert("News Feed: Coming in v9"); }
         }
+        function toggleFs() { !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); }
 
-        // 10. FULLSCREEN TOGGLE
-        function toggleFullScreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else {
-                if (document.exitFullscreen) document.exitFullscreen();
+        // INPUT COMMAND
+        el('cmd-input').addEventListener('keypress', e => {
+            if (e.key === 'Enter') {
+                const val = e.target.value.trim().toLowerCase();
+                if(val) changePair(val.endsWith('usdt') ? val : val + 'usdt');
+                e.target.value = '';
             }
-        }
+        });
 
-        // --- BOOT ---
+        // BOOT
         initWatchlist();
         startGlobalTicker();
         startStream(currentPair);
-        loadTvWidget();
-        loadGauge();
+        loadTv();
+        loadMiniGauge();
 
     </script>
 </body>
