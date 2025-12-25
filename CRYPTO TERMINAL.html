@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLOOMBERG ENS® - HEDGE FUND TERMINAL v9</title>
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <style>
+        :root { --bg: #000; --amber: #ffaa00; --dim: #666; --green: #0f0; --red: #f00; --liq: #d900ff; --border: #333; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', monospace; user-select: none; }
+        body { background: var(--bg); color: var(--amber); height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-size: 10px; }
+        
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #333; }
+
+        /* ANIMATIONS */
+        @keyframes flashLiq { 0% { background: var(--liq); color: #fff; } 100% { background: transparent; } }
+        .flash-liq { animation: flashLiq 1s; border-left: 3px solid var(--liq) !important; }
+
+        /* HEADER & TICKER */
+        .ticker-wrap { width: 100%; background: #111; border-bottom: 1px solid var(--amber); white-space: nowrap; padding: 3px 0; overflow: hidden; }
+        .ticker { display: inline-block; animation: ticker 45s linear infinite; }
+        @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+        .header { background: var(--amber); color: #000; padding: 2px 10px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+
+        /* LAYOUT */
+        .grid { display: grid; grid-template-columns: 240px 1fr 280px; grid-template-rows: 30px 1fr 160px; gap: 1px; background: var(--border); flex-grow: 1; }
+        .panel { background: var(--bg); display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .title { background: #111; padding: 3px 5px; border-bottom: 1px solid var(--border); color: var(--dim); font-weight: bold; display: flex; justify-content: space-between; font-size: 9px; }
+
+        /* TABS */
+        .tabs-bar { grid-column: span 3; background: #000; display: flex; align-items: center; border-bottom: 1px solid var(--border); padding: 0 10px; }
+        .tab-btn { background: #111; border: 1px solid #333; color: #666; padding: 3px 10px; cursor: pointer; font-size: 9px; margin-right: 2px; }
+        .tab-btn:hover, .tab-btn.active { background: var(--amber); color: #000; font-weight: bold; }
+        
+        /* PRESSURE BAR */
+        .pressure-container { height: 10px; background: #222; display: flex; width: 100%; border-bottom: 1px solid #333; }
+        .p-buy { background: var(--green); height: 100%; transition: width 0.3s; }
+        .p-sell { background: var(--red); height: 100%; flex-grow: 1; }
+
+        /* NEWS FEED */
+        .news-item { padding: 8px 5px; border-bottom: 1px solid #222; cursor: pointer; font-size: 9px; line-height: 1.2; }
+        .news-item:hover { background: #111; color: #fff; }
+        .news-time { color: #555; font-size: 8px; margin-bottom: 2px; }
+
+        /* PAPER TRADING */
+        .trade-panel { padding: 10px; border-bottom: 1px solid #333; display: flex; flex-direction: column; gap: 6px; }
+        .t-input { background: #111; border: 1px solid #333; color: #fff; width: 100%; text-align: right; font-weight: bold; padding: 4px; }
+        .btn-row { display: flex; gap: 5px; }
+        .btn-trade { flex: 1; padding: 5px; border: none; cursor: pointer; font-weight: bold; color: #000; }
+        .btn-buy { background: var(--green); } .btn-sell { background: var(--red); }
+        .pos-box { background: #111; border: 1px solid #333; padding: 5px; margin-top: 5px; display: none; }
+
+        /* GRID MODE (4 CHARTS) */
+        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; width: 100%; height: 100%; }
+        .chart-cell { border: 1px solid #222; position: relative; }
+
+        /* TAPE & LISTS */
+        .list { overflow-y: auto; flex-grow: 1; }
+        .row { display: flex; justify-content: space-between; padding: 1px 6px; font-size: 10px; border-bottom: 1px solid #080808; }
+        .whale { color: var(--amber); font-weight: bold; background: rgba(255, 170, 0, 0.15); }
+        .rekt { color: #fff; font-weight: bold; }
+
+        /* STATS */
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; padding: 5px; }
+        .box { border: 1px solid var(--border); padding: 4px; display: flex; flex-direction: column; justify-content: center; }
+        .s-val { font-size: 12px; font-weight: bold; }
+
+        /* FOOTER */
+        .foot { background: #111; border-top: 1px solid #333; padding: 2px 10px; color: var(--dim); display: flex; justify-content: space-between; font-size: 9px; align-items: center; }
+        
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="ticker-wrap"><div class="ticker" id="global-ticker">INITIALIZING DATA STREAMS...</div></div>
+
+    <div class="header">
+        <span>BLOOMBERG ENS TERMINAL v9.0 [HEDGE FUND ED.]</span>
+        <div style="display:flex; gap:10px;">
+            <span style="background:#222; padding:0 5px;">OI: <span id="oi-val" style="color:var(--amber)">--</span></span>
+            <span style="background:#222; padding:0 5px;">FUNDING: <span id="fund-val">--</span></span>
+            <span id="clock">--:--:--</span>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="tabs-bar">
+            <span style="color:var(--amber); font-weight:bold; margin-right:15px;" id="pair-disp">BTCUSDT</span>
+            <button class="tab-btn active" onclick="setLeftTab('trade')">TRADING</button>
+            <button class="tab-btn" onclick="setLeftTab('news')">NEWS FEED</button>
+            <div style="flex-grow:1"></div>
+            <button class="tab-btn" onclick="toggleGrid()">GRID VIEW</button>
+            <button class="tab-btn" onclick="setTf('1')">1m</button>
+            <button class="tab-btn" onclick="setTf('15')">15m</button>
+            <button class="tab-btn" onclick="setTf('60')">1H</button>
+        </div>
+
+        <div class="panel" style="grid-row: span 2;">
+            <div id="tab-trade">
+                <div class="title"><span style="color:var(--green)">PAPER TRADING</span><span>WALLET</span></div>
+                <div class="trade-panel">
+                    <div style="display:flex; justify-content:space-between; font-size:9px; color:#888;">
+                        <span>EQUITY</span><span id="wallet-bal" style="color:#fff; font-weight:bold">--</span>
+                    </div>
+                    <input type="number" id="trade-size" class="t-input" placeholder="SIZE (USD)" value="1000">
+                    <div class="btn-row">
+                        <button class="btn-trade btn-buy" onclick="trade('long')">BUY</button>
+                        <button class="btn-trade btn-sell" onclick="trade('short')">SELL</button>
+                    </div>
+                    <div id="pos-box" class="pos-box">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                            <span id="pos-side" style="font-weight:bold">LONG</span>
+                            <span id="pos-pnl">--</span>
+                        </div>
+                        <button style="width:100%; background:#333; border:none; color:#fff; cursor:pointer;" onclick="closePos()">CLOSE</button>
+                    </div>
+                </div>
+                <div class="title"><span>ORDER BOOK</span><span>DEPTH</span></div>
+                <div class="list">
+                    <div id="asks" style="display:flex; flex-direction:column-reverse;"></div>
+                    <div id="spread" style="text-align:center; color:#444; border-y:1px solid #222;">-</div>
+                    <div id="bids"></div>
+                </div>
+            </div>
+
+            <div id="tab-news" class="hidden list">
+                <div style="padding:10px; color:#666; text-align:center;">LOADING NEWS WIRE...</div>
+            </div>
+        </div>
+
+        <div class="panel" style="grid-row: span 2;">
+            <div id="tv-container" style="width:100%; height:100%;"></div>
+            <div id="grid-container" class="chart-grid hidden">
+                <div id="g1" class="chart-cell"></div>
+                <div id="g2" class="chart-cell"></div>
+                <div id="g3" class="chart-cell"></div>
+                <div id="g4" class="chart-cell"></div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="title"><span>ORDER FLOW</span><span>IMBALANCE</span></div>
+            <div class="pressure-container">
+                <div id="p-bar" class="p-buy" style="width: 50%;"></div>
+                <div class="p-sell"></div>
+            </div>
+            <div class="title"><span>TAPE & LIQUIDATIONS</span><span>FUTURES</span></div>
+            <div id="tape" class="list"></div>
+        </div>
+
+        <div class="panel">
+            <div class="title"><span>SENTIMENT</span><span>TECH</span></div>
+            <div id="gauge" style="flex:1"></div>
+        </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr; grid-template-rows: 1fr; min-height: 60px; background:var(--bg); flex-grow:0;">
+        <div class="stats">
+            <div class="box"><span class="s-val" id="high">--</span><span style="font-size:8px; color:#666">24H HIGH</span></div>
+            <div class="box"><span class="s-val" id="vol">--</span><span style="font-size:8px; color:#666">VOLUME</span></div>
+            <div class="box"><span class="s-val" id="chg">--</span><span style="font-size:8px; color:#666">CHANGE</span></div>
+            <div class="box"><span class="s-val" id="liq-24h" style="color:var(--liq)">--</span><span style="font-size:8px; color:#666">LIQUIDATIONS (Vol)</span></div>
+        </div>
+    </div>
+
+    <div class="foot">
+        <div><span style="color:var(--green)">● ONLINE</span> | <span id="ping">PING: --ms</span></div>
+        <div style="display:flex; gap:5px;">
+            <input id="cmd" type="text" style="background:#000; border:1px solid #333; color:var(--amber); width:80px; text-align:center;" placeholder="CMD">
+            <button style="background:transparent; border:1px solid #444; color:#888;" onclick="toggleFs()">[FS]</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CORE ---
+        let currentPair = 'btcusdt';
+        let wallet = 10000;
+        let position = null;
+        let wsSpot, wsFut;
+        let buyVol = 0, sellVol = 0; // For Pressure
+        let isGrid = false;
+
+        const el = id => document.getElementById(id);
+        
+        // --- 1. PERSISTENCE (Sauvegarde) ---
+        function loadData() {
+            const saved = localStorage.getItem('bloomberg_data');
+            if(saved) {
+                const d = JSON.parse(saved);
+                wallet = d.wallet || 10000;
+                position = d.position;
+            }
+            updateWallet();
+        }
+        function saveData() {
+            localStorage.setItem('bloomberg_data', JSON.stringify({ wallet, position }));
+        }
+
+        // --- 2. DUAL ENGINE (Spot + Futures) ---
+        function startStreams(pair) {
+            if(wsSpot) wsSpot.close();
+            if(wsFut) wsFut.close();
+
+            // SPOT WS (Prix, Chart, Book, Tape de base)
+            wsSpot = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${pair}@depth10/${pair}@trade/${pair}@ticker`);
+            wsSpot.onmessage = e => {
+                const msg = JSON.parse(e.data);
+                if(msg.stream.includes('trade')) handleTrade(msg.data);
+                if(msg.stream.includes('depth')) handleDepth(msg.data);
+                if(msg.stream.includes('ticker')) handleTicker(msg.data);
+            };
+
+            // FUTURES WS (Liquidations, AggTrades pour OI simulé)
+            // Note: Le vrai OI nécessite une API Rest, on utilisera un fetch pour l'OI
+            wsFut = new WebSocket(`wss://fstream.binance.com/stream?streams=${pair}@forceOrder`);
+            wsFut.onmessage = e => {
+                const msg = JSON.parse(e.data);
+                if(msg.stream.includes('forceOrder')) handleLiq(msg.data);
+            };
+
+            // API REST pour Open Interest (Toutes les 30s)
+            fetchOI(pair);
+        }
+
+        // --- 3. DATA HANDLERS ---
+        function handleTrade(d) {
+            const price = parseFloat(d.p);
+            const size = parseFloat(d.q);
+            const isSell = d.m;
+            
+            // Pressure Calculation
+            if(isSell) sellVol += size; else buyVol += size;
+            // Reset toutes les 100 updates pour garder le flow frais
+            if(buyVol + sellVol > 500) { buyVol *= 0.1; sellVol *= 0.1; }
+            const pressure = (buyVol / (buyVol + sellVol)) * 100;
+            el('p-bar').style.width = `${pressure}%`;
+
+            // Tape
+            const row = document.createElement('div');
+            row.className = 'row';
+            const usd = price * size;
+            if(usd > 50000) row.classList.add('whale');
+            
+            row.innerHTML = `
+                <span style="color:#666">${new Date(d.T).toLocaleTimeString().split(' ')[0]}</span>
+                <span class="${isSell?'r':'g'}">${price.toFixed(2)}</span>
+                <span style="color:#888">${size.toFixed(4)}</span>
+            `;
+            const tape = el('tape');
+            tape.prepend(row);
+            if(tape.children.length > 30) tape.lastChild.remove();
+
+            // PnL Update
+            if(position) {
+                const diff = position.side === 'long' ? (price - position.entry) : (position.entry - price);
+                const pnl = diff * position.amt;
+                el('pos-pnl').innerText = (pnl>0?'+':'') + pnl.toFixed(2);
+                el('pos-pnl').style.color = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+            }
+        }
+
+        function handleLiq(d) {
+            const o = d.o;
+            const row = document.createElement('div');
+            row.className = 'row flash-liq';
+            const side = o.S === 'SELL' ? 'LONG REKT' : 'SHORT REKT';
+            row.innerHTML = `<span class="rekt">☠️ ${side}</span><span style="color:#fff">${parseFloat(o.p).toFixed(2)}</span><span>${parseFloat(o.q).toFixed(2)}</span>`;
+            el('tape').prepend(row);
+            
+            // Update Liq Stat (Fake aggregation for demo)
+            el('liq-24h').innerText = "ACTIVE"; 
+        }
+
+        function handleDepth(d) {
+            renderList(d.asks, el('asks'), 'r', true);
+            renderList(d.bids, el('bids'), 'g', false);
+            el('spread').innerText = (parseFloat(d.asks[0][0]) - parseFloat(d.bids[0][0])).toFixed(2);
+        }
+
+        function renderList(l, c, col, rev) {
+            c.innerHTML = '';
+            (rev ? l.slice(0,8).reverse() : l.slice(0,8)).forEach(i => {
+                c.innerHTML += `<div class="row"><span class="${col}">${parseFloat(i[0]).toFixed(2)}</span><span>${parseFloat(i[1]).toFixed(4)}</span></div>`;
+            });
+        }
+
+        function handleTicker(d) {
+            el('high').innerText = parseFloat(d.h).toFixed(2);
+            el('vol').innerText = Math.floor(d.v);
+            const p = parseFloat(d.P);
+            el('chg').innerText = p.toFixed(2) + "%";
+            el('chg').style.color = p>=0?'var(--green)':'var(--red)';
+        }
+
+        async function fetchOI(pair) {
+            try {
+                // Fetch public Binance Futures API
+                const res = await fetch(`https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${pair.toUpperCase()}`);
+                const data = await res.json();
+                el('fund-val').innerText = (parseFloat(data.lastFundingRate)*100).toFixed(4) + "%";
+                
+                // Fetch OI
+                const resOI = await fetch(`https://fapi.binance.com/fapi/v1/openInterest?symbol=${pair.toUpperCase()}`);
+                const dataOI = await resOI.json();
+                el('oi-val').innerText = "$" + (parseFloat(dataOI.openInterest) * parseFloat(data.markPrice) / 1000000).toFixed(2) + "M";
+            } catch(e) { console.log("Cors/Limit for OI"); }
+        }
+
+        // --- 4. NEWS ENGINE ---
+        async function loadNews() {
+            const container = el('tab-news');
+            try {
+                const res = await fetch('https://min-api.cryptocompare.com/data/v2/news/?lang=EN');
+                const data = await res.json();
+                container.innerHTML = '';
+                data.Data.slice(0, 15).forEach(n => {
+                    const d = document.createElement('div');
+                    d.className = 'news-item';
+                    d.innerHTML = `<div class="news-time">${new Date(n.published_on*1000).toLocaleTimeString()} - ${n.source}</div><div>${n.title}</div>`;
+                    d.onclick = () => window.open(n.url, '_blank');
+                    container.appendChild(d);
+                });
+            } catch(e) { container.innerHTML = '<div style="padding:10px">NEWS API ERROR</div>'; }
+        }
+
+        // --- 5. GRID & WIDGETS ---
+        function loadWidget(id, pair, interval='1') {
+            new TradingView.widget({
+                "autosize": true, "symbol": "BINANCE:"+pair.toUpperCase(), "interval": interval,
+                "timezone": "Etc/UTC", "theme": "dark", "style": "1", "locale": "fr", "toolbar_bg": "#000",
+                "enable_publishing": false, "hide_side_toolbar": true, "hide_top_toolbar": true,
+                "container_id": id,
+                "overrides": { "paneProperties.background": "#000", "scalesProperties.textColor": "#555" }
+            });
+        }
+
+        function toggleGrid() {
+            isGrid = !isGrid;
+            if(isGrid) {
+                el('tv-container').classList.add('hidden');
+                el('grid-container').classList.remove('hidden');
+                loadWidget('g1', 'BTCUSDT'); loadWidget('g2', 'ETHUSDT');
+                loadWidget('g3', 'SOLUSDT'); loadWidget('g4', 'BNBUSDT');
+            } else {
+                el('tv-container').classList.remove('hidden');
+                el('grid-container').classList.add('hidden');
+            }
+        }
+
+        function loadMainChart() {
+            new TradingView.widget({
+                "autosize": true, "symbol": "BINANCE:"+currentPair.toUpperCase(), "interval": "1",
+                "timezone": "Etc/UTC", "theme": "dark", "style": "1", "locale": "fr", "toolbar_bg": "#000",
+                "enable_publishing": false, "container_id": "tv-container",
+                "overrides": { "paneProperties.background": "#000000" }
+            });
+            // Gauge
+             const s = document.createElement('script');
+             s.src="https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js";
+             s.async=true; s.innerHTML=JSON.stringify({"interval":"1m","width":"100%","height":"100%","symbol":"BINANCE:"+currentPair.toUpperCase(),"isTransparent":true,"colorTheme":"dark","locale":"fr"});
+             el('gauge').innerHTML=''; el('gauge').appendChild(s);
+        }
+
+        // --- UI & TRADE LOGIC ---
+        function setLeftTab(t) {
+            if(t==='trade') { el('tab-trade').classList.remove('hidden'); el('tab-news').classList.add('hidden'); }
+            if(t==='news') { el('tab-trade').classList.add('hidden'); el('tab-news').classList.remove('hidden'); loadNews(); }
+        }
+
+        function trade(side) {
+            const size = parseFloat(el('trade-size').value);
+            const price = parseFloat(document.querySelector('.g').innerText); // Hack to get current price from DOM
+            if(!price) return;
+            wallet -= size*0.001; // Fee
+            position = { side, entry: price, size, amt: size/price };
+            updateWallet();
+            saveData();
+        }
+        function closePos() {
+            if(!position) return;
+            const price = parseFloat(document.querySelector('.g').innerText);
+            const diff = position.side === 'long' ? (price - position.entry) : (position.entry - price);
+            wallet += (diff * position.amt);
+            position = null;
+            updateWallet();
+            saveData();
+        }
+        function updateWallet() {
+            el('wallet-bal').innerText = "$"+wallet.toFixed(2);
+            el('pos-box').style.display = position ? 'block' : 'none';
+            if(position) el('pos-side').innerText = position.side.toUpperCase();
+        }
+
+        function initTicker() {
+             const ws = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
+             ws.onmessage = e => {
+                 const d = JSON.parse(e.data).filter(x=>x.s.endsWith('USDT')).sort((a,b)=>parseFloat(b.q)-parseFloat(a.q)).slice(0,15);
+                 el('global-ticker').innerHTML = d.map(x=>`<span style="margin-right:20px">${x.s.replace('USDT','')} <span style="color:${x.P>0?'var(--green)':'var(--red)'}">${parseFloat(x.c).toFixed(2)}</span></span>`).join('');
+             };
+        }
+
+        // --- BOOT ---
+        loadData();
+        loadMainChart();
+        startStreams(currentPair);
+        initTicker();
+        setInterval(() => el('time').innerText = new Date().toISOString().split('T')[1].split('.')[0] + " UTC", 1000);
+
+        // Input
+        el('cmd').addEventListener('keypress', e=>{
+            if(e.key==='Enter') {
+                currentPair = e.target.value.toLowerCase();
+                if(!currentPair.endsWith('usdt')) currentPair += 'usdt';
+                el('pair-disp').innerText = currentPair.toUpperCase();
+                startStreams(currentPair);
+                loadMainChart();
+                e.target.value='';
+            }
+        });
+        function toggleFs() { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+
+    </script>
+</body>
+</html>
