@@ -3,109 +3,306 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLOOMBERG ENS® - HYBRID TERMINAL</title>
+    <title>BLOOMBERG ENS® - ULTRA TERMINAL</title>
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
-        :root { --bg: #000; --amber: #ffaa00; --dim: #666; --green: #0f0; --red: #f00; --border: #333; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', monospace; }
-        body { background: var(--bg); color: var(--amber); height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-size: 11px; }
+        :root { --bg: #000; --amber: #ffaa00; --dim: #666; --green: #0f0; --red: #f00; --border: #333; --panel: #0a0a0a; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', monospace; scrollbar-width: none; }
+        body { background: var(--bg); color: var(--amber); height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-size: 10px; }
+        
+        /* 1. GLOBAL TICKER */
+        .ticker-wrap { width: 100%; overflow: hidden; background: #111; border-bottom: 1px solid var(--amber); white-space: nowrap; padding: 4px 0; }
+        .ticker { display: inline-block; animation: ticker 30s linear infinite; }
+        @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+        .tick-item { margin-right: 20px; font-weight: bold; }
+        .tick-up { color: var(--green); } .tick-down { color: var(--red); }
 
-        /* HEADER & CMD */
-        .header { background: var(--amber); color: #000; padding: 4px 10px; font-weight: bold; display: flex; justify-content: space-between; }
-        .cmd { background: #111; border-bottom: 1px solid var(--amber); padding: 5px; display: flex; align-items: center; }
-        .cmd input { background: transparent; border: none; color: var(--amber); width: 200px; margin-left: 10px; text-transform: uppercase; font-weight: bold; outline: none; }
+        /* HEADER */
+        .header { background: var(--amber); color: #000; padding: 2px 10px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         
-        /* GRID LAYOUT */
-        .grid { display: grid; grid-template-columns: 280px 1fr 280px; grid-template-rows: 1fr 180px; gap: 1px; background: var(--border); flex-grow: 1; }
+        /* LAYOUT */
+        .grid { display: grid; grid-template-columns: 220px 1fr 260px; grid-template-rows: 30px 1fr 160px; gap: 1px; background: var(--border); flex-grow: 1; }
         .panel { background: var(--bg); display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .title { background: #111; padding: 4px; border-bottom: 1px solid var(--border); color: var(--dim); font-weight: bold; display: flex; justify-content: space-between; }
+        .title { background: #111; padding: 3px 5px; border-bottom: 1px solid var(--border); color: var(--dim); font-weight: bold; display: flex; justify-content: space-between; font-size: 9px; }
+
+        /* 2. WATCHLIST */
+        .watchlist-item { padding: 4px 8px; border-bottom: 1px solid #222; cursor: pointer; display: flex; justify-content: space-between; }
+        .watchlist-item:hover { background: #222; color: #fff; }
+        .wl-symbol { font-weight: bold; }
         
-        /* LISTS (TAPE & BOOK) */
+        /* 6. TIMEFRAMES */
+        .tf-bar { grid-column: span 3; background: #000; display: flex; align-items: center; border-bottom: 1px solid var(--border); padding: 0 10px; gap: 10px; }
+        .tf-btn { background: #222; border: 1px solid #444; color: #888; padding: 2px 8px; cursor: pointer; font-size: 9px; }
+        .tf-btn:hover, .tf-btn.active { background: var(--amber); color: #000; border-color: var(--amber); }
+
+        /* 3. WHALE ALERT (TAPE) */
         .list { overflow: hidden; flex-grow: 1; }
-        .row { display: flex; justify-content: space-between; padding: 1px 5px; }
+        .row { display: flex; justify-content: space-between; padding: 1px 5px; font-size: 10px; }
+        .whale { background: rgba(255, 170, 0, 0.2); font-weight: bold; border-left: 2px solid var(--amber); }
         .g { color: var(--green); } .r { color: var(--red); }
 
-        /* TRADINGVIEW CONTAINER */
-        #tv-container { width: 100%; height: 100%; }
+        /* 5. CALCULATOR */
+        .calc-box { padding: 10px; display: flex; flex-direction: column; gap: 5px; }
+        .calc-input { background: #111; border: 1px solid #333; color: var(--amber); padding: 4px; width: 100%; text-align: right; }
+        .calc-res { text-align: right; font-weight: bold; font-size: 12px; }
+
+        /* 7. RANGE BAR */
+        .range-container { padding: 5px 10px; display: flex; align-items: center; gap: 5px; font-size: 9px; color: #888; }
+        .range-bar { flex-grow: 1; height: 4px; background: #222; position: relative; border-radius: 2px; }
+        .range-fill { height: 100%; background: linear-gradient(90deg, var(--red), var(--amber), var(--green)); width: 0%; transition: width 0.5s; }
+        .range-cursor { position: absolute; top: -3px; width: 2px; height: 10px; background: #fff; transition: left 0.5s; }
+
+        /* 9. VISUAL DEPTH */
+        .ob-row { position: relative; display: flex; justify-content: space-between; padding: 1px 5px; }
+        .ob-bg { position: absolute; top: 0; bottom: 0; right: 0; opacity: 0.15; z-index: 0; }
+        .ob-ask .ob-bg { background: var(--red); } .ob-bid .ob-bg { background: var(--green); }
+        .ob-val { position: relative; z-index: 1; }
+
+        /* 10. FULLSCREEN & FOOTER */
+        .foot { background: #111; border-top: 1px solid #333; padding: 2px 10px; color: var(--dim); display: flex; justify-content: space-between; font-size: 9px; align-items: center; }
+        .btn-fs { background: transparent; border: 1px solid #444; color: #888; cursor: pointer; padding: 0 4px; }
         
-        /* STATS */
-        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px; }
-        .box { border: 1px solid var(--border); padding: 5px; }
-        .val { font-size: 13px; font-weight: bold; }
-        .foot { background: #111; border-top: 1px solid #333; padding: 5px; color: var(--dim); display: flex; justify-content: space-between; }
+        #tv-container, #gauge-container { width: 100%; height: 100%; }
+        /* Cacher le copyright TV si possible ou l'intégrer proprement */
+        .tradingview-widget-copyright { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <span>BLOOMBERG ENS TERMINAL</span>
-        <span id="time">--:--:-- UTC</span>
+    <div class="ticker-wrap">
+        <div class="ticker" id="global-ticker">LOADING MARKET DATA...</div>
     </div>
-    
-    <div class="cmd">
-        <span>COMMAND ></span>
-        <input type="text" id="pair" value="BTCUSDT" placeholder="ENTER PAIR...">
-        <span>[ENTER]</span>
+
+    <div class="header">
+        <span>BLOOMBERG ENS TERMINAL v7.0</span>
+        <span id="time">--:--:-- UTC</span>
     </div>
 
     <div class="grid">
+        <div class="tf-bar">
+            <span>PERIOD:</span>
+            <button class="tf-btn active" onclick="changeTf('1')">1M</button>
+            <button class="tf-btn" onclick="changeTf('15')">15M</button>
+            <button class="tf-btn" onclick="changeTf('60')">1H</button>
+            <button class="tf-btn" onclick="changeTf('240')">4H</button>
+            <button class="tf-btn" onclick="changeTf('D')">1D</button>
+            <span style="margin-left:auto; color:#444">CMD: <span id="current-pair-disp" style="color:var(--amber)">BTCUSDT</span></span>
+        </div>
+
         <div class="panel" style="grid-row: span 2;">
+            <div class="title"><span>MARKET WATCH</span><span>SELECT</span></div>
+            <div id="watchlist" class="list" style="flex-grow: 0; max-height: 200px; border-bottom: 1px solid #333;"></div>
+            
+            <div class="title"><span>CALCULATOR</span><span>USD &#8644; COIN</span></div>
+            <div class="calc-box">
+                <div>USD AMOUNT:</div>
+                <input type="number" id="calc-usd" class="calc-input" placeholder="1000" oninput="calcPosition()">
+                <div>COIN AMOUNT:</div>
+                <div id="calc-res" class="calc-res">0.000000</div>
+            </div>
+
             <div class="title"><span>ORDER BOOK</span><span>DEPTH</span></div>
-            <div class="list">
-                <div id="asks" style="display:flex; flex-direction:column-reverse;"></div>
-                <div id="spread" style="text-align:center; color:#444; padding:2px;">---</div>
-                <div id="bids"></div>
+            <div class="list" style="display:flex; flex-direction:column;">
+                <div id="asks" style="flex:1; display:flex; flex-direction:column-reverse;"></div>
+                <div id="spread" style="text-align:center; color:#444; padding:2px; border-top:1px solid #222; border-bottom:1px solid #222;">---</div>
+                <div id="bids" style="flex:1;"></div>
+            </div>
+        </div>
+
+        <div class="panel" style="grid-row: span 2;">
+            <div id="tv-container"></div>
+            
+            <div class="range-container" style="background: #080808; border-top: 1px solid #333; height: 30px;">
+                <span>LOW: <span id="range-low">--</span></span>
+                <div class="range-bar">
+                    <div class="range-fill" id="range-fill"></div>
+                    <div class="range-cursor" id="range-cursor"></div>
+                </div>
+                <span>HIGH: <span id="range-high">--</span></span>
             </div>
         </div>
 
         <div class="panel">
-            <div class="title">
-                <span>CHART (TRADINGVIEW)</span>
-                <span style="color:var(--amber)">LIVE FEED</span>
-            </div>
-            <div id="tv-container"></div>
-        </div>
-
-        <div class="panel" style="grid-row: span 2;">
-            <div class="title"><span>TAPE</span><span>TRADES</span></div>
+            <div class="title"><span>TAPE (WHALE > $50k)</span><span>TRADES</span></div>
             <div id="tape" class="list"></div>
         </div>
-
+        
         <div class="panel">
-            <div class="title">MARKET DATA (24H)</div>
-            <div class="stats">
-                <div class="box"><div class="val" id="high">--</div></div>
-                <div class="box"><div class="val" id="low">--</div></div>
-                <div class="box"><div class="val" id="vol">--</div></div>
-                <div class="box"><div class="val" id="chg">--</div></div>
-            </div>
+            <div class="title"><span>TECH GAUGE</span><span>SENTIMENT</span></div>
+            <div id="gauge-container"></div>
         </div>
     </div>
 
     <div class="foot">
-        <div id="status">● SYSTEM READY</div>
-        <div>BINANCE WSS • TV WIDGET</div>
+        <div style="display:flex; gap:15px;">
+            <span id="status">● SYSTEM READY</span>
+            <span id="ping">PING: --ms</span>
+        </div>
+        <button class="btn-fs" onclick="toggleFullScreen()">[ FULLSCREEN ]</button>
     </div>
 
     <script>
-        // CONFIG
+        // --- CONFIG ---
         let ws = null;
+        let tickerWs = null;
         let currentPair = 'btcusdt';
+        let currentPrice = 0;
+        let currentTimeframe = '1';
+        let lastPingTime = Date.now();
+        
         const el = id => document.getElementById(id);
         const log = msg => el('status').innerText = "● " + msg;
+
+        // FAVORIS
+        const favorites = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT', 'ADAUSDT', 'AVAXUSDT'];
 
         // HORLOGE
         setInterval(() => el('time').innerText = new Date().toISOString().split('T')[1].split('.')[0] + ' UTC', 1000);
 
-        // 1. INITIALISER TRADINGVIEW
-        function loadTvWidget(pair) {
-            // Nettoyage conteneur
-            el('tv-container').innerHTML = "";
+        // --- 1. GLOBAL TICKER (TOP) ---
+        function startGlobalTicker() {
+            if(tickerWs) tickerWs.close();
+            // Flux "MiniTicker" pour tous les marchés
+            tickerWs = new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr');
             
+            tickerWs.onmessage = (evt) => {
+                const data = JSON.parse(evt.data);
+                // On filtre pour ne garder que les gros (ceux qui finissent par USDT et sont dans une liste arbitraire)
+                const majorCoins = data.filter(c => c.s.endsWith('USDT') && parseFloat(c.q) > 10000000).slice(0, 15);
+                
+                let html = '';
+                majorCoins.forEach(c => {
+                    const symbol = c.s.replace('USDT','');
+                    const change = parseFloat(c.P || 0).toFixed(2); // P = percent change
+                    const color = change >= 0 ? 'tick-up' : 'tick-down';
+                    html += `<span class="tick-item">${symbol} <span class="${color}">${parseFloat(c.c).toFixed(2)} (${change}%)</span></span>`;
+                });
+                el('global-ticker').innerHTML = html;
+            };
+        }
+
+        // --- 2. WATCHLIST GENERATOR ---
+        function initWatchlist() {
+            const container = el('watchlist');
+            container.innerHTML = '';
+            favorites.forEach(pair => {
+                const div = document.createElement('div');
+                div.className = 'watchlist-item';
+                div.innerHTML = `<span class="wl-symbol">${pair.replace('USDT','')}</span><span id="wl-price-${pair}">--</span>`;
+                div.onclick = () => changePair(pair);
+                container.appendChild(div);
+            });
+        }
+
+        // --- MAIN WEBSOCKET (Book, Tape, Range) ---
+        function startStream(pair) {
+            if (ws) ws.close();
+            log("SYNCING " + pair + "...");
+            
+            const streams = [`${pair}@depth10`, `${pair}@trade`, `${pair}@ticker`].join('/');
+            ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
+
+            ws.onopen = () => { log("STREAM ACTIVE"); el('status').style.color = "#0f0"; };
+            
+            // 8. LATENCY CHECK
+            ws.onping = () => { ws.pong(); }; // Keep alive
+
+            ws.onmessage = (evt) => {
+                // Latency sim (diff between now and packet processing)
+                const now = Date.now();
+                if(Math.random() > 0.9) el('ping').innerText = `PING: ${now - lastPingTime}ms`;
+                lastPingTime = now;
+
+                const msg = JSON.parse(evt.data);
+                const data = msg.data;
+                const type = msg.stream.split('@')[1];
+
+                if (type === 'trade') updateTape(data);
+                if (type === 'depth10') updateBook(data);
+                if (type === 'ticker') updateRange(data);
+            };
+        }
+
+        // --- UI UPDATERS ---
+
+        function updateTape(data) {
+            currentPrice = parseFloat(data.p);
+            
+            // Mise à jour prix dans watchlist
+            const wlEl = el(`wl-price-${currentPair.toUpperCase()}`);
+            if(wlEl) wlEl.innerText = currentPrice.toFixed(2);
+
+            const row = document.createElement('div');
+            row.className = 'row';
+            
+            // 3. WHALE DETECTOR LOGIC
+            const valueUSD = parseFloat(data.p) * parseFloat(data.q);
+            if (valueUSD > 50000) row.classList.add('whale'); // Seuil de baleine
+
+            row.innerHTML = `
+                <span style="color:#555">${new Date(data.T).toLocaleTimeString().split(' ')[0]}</span>
+                <span class="${data.m?'r':'g'}">${parseFloat(data.p).toFixed(2)}</span>
+                <span style="color:#666">${parseFloat(data.q).toFixed(4)}</span>
+            `;
+            el('tape').prepend(row);
+            if (el('tape').children.length > 25) el('tape').lastChild.remove();
+            
+            // Trigger calculator update
+            calcPosition();
+        }
+
+        function updateBook(data) {
+            renderList(data.asks, el('asks'), 'ob-ask', true);
+            renderList(data.bids, el('bids'), 'ob-bid', false);
+            el('spread').innerText = (parseFloat(data.asks[0][0]) - parseFloat(data.bids[0][0])).toFixed(2);
+        }
+
+        function renderList(list, container, type, reverse) {
+            container.innerHTML = '';
+            const arr = reverse ? list.slice(0,12).reverse() : list.slice(0,12);
+            arr.forEach(i => {
+                const d = document.createElement('div');
+                d.className = `ob-row ${type}`;
+                const price = parseFloat(i[0]).toFixed(2);
+                const size = parseFloat(i[1]).toFixed(4);
+                // 9. VISUAL DEPTH BAR
+                const width = Math.min(size * 20, 100); 
+                d.innerHTML = `<div class="ob-bg" style="width:${width}%"></div><span class="ob-val ${type==='ob-ask'?'r':'g'}">${price}</span><span class="ob-val" style="color:#444">${size}</span>`;
+                container.appendChild(d);
+            });
+        }
+
+        // 7. RANGE BAR UPDATER
+        function updateRange(data) {
+            const high = parseFloat(data.h);
+            const low = parseFloat(data.l);
+            const cur = parseFloat(data.c);
+            
+            el('range-high').innerText = high.toFixed(2);
+            el('range-low').innerText = low.toFixed(2);
+            
+            // Calcul pourcentage position
+            const pct = ((cur - low) / (high - low)) * 100;
+            el('range-fill').style.width = `${Math.max(0, Math.min(100, pct))}%`;
+            el('range-cursor').style.left = `${Math.max(0, Math.min(100, pct))}%`;
+        }
+
+        // 5. POSITION CALCULATOR
+        function calcPosition() {
+            const usd = parseFloat(el('calc-usd').value) || 0;
+            if (currentPrice > 0) {
+                el('calc-res').innerText = (usd / currentPrice).toFixed(6) + " " + currentPair.replace('usdt','').toUpperCase();
+            }
+        }
+
+        // --- WIDGETS ---
+        
+        function loadTvWidget() {
+            el('tv-container').innerHTML = "";
             new TradingView.widget({
                 "autosize": true,
-                "symbol": "BINANCE:" + pair.toUpperCase(),
-                "interval": "1",
+                "symbol": "BINANCE:" + currentPair.toUpperCase(),
+                "interval": currentTimeframe,
                 "timezone": "Etc/UTC",
                 "theme": "dark",
                 "style": "1",
@@ -113,8 +310,7 @@
                 "toolbar_bg": "#000000",
                 "enable_publishing": false,
                 "hide_top_toolbar": false,
-                "hide_side_toolbar": false,
-                "allow_symbol_change": false, // On force l'utilisateur à utiliser notre barre de commande
+                "hide_side_toolbar": false, // On garde les outils de dessin
                 "container_id": "tv-container",
                 "overrides": {
                     "paneProperties.background": "#000000",
@@ -124,79 +320,61 @@
             });
         }
 
-        // 2. WEBSOCKET (Données annexes : Tape, Book, Stats)
-        function startStream(pair) {
-            if (ws) ws.close();
-            log("SYNCING DATA...");
-            
-            // On retire le flux 'kline' car TradingView s'en occupe
-            const streams = [`${pair}@depth10`, `${pair}@trade`, `${pair}@ticker`].join('/');
-            ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
-
-            ws.onopen = () => { log("STREAM ACTIVE"); el('status').style.color = "#0f0"; };
-            ws.onerror = () => { log("CONNECTION ERROR"); el('status').style.color = "#f00"; };
-
-            ws.onmessage = (evt) => {
-                const msg = JSON.parse(evt.data);
-                const data = msg.data;
-                const type = msg.stream.split('@')[1];
-
-                if (type === 'trade') updateTape(data);
-                if (type === 'depth10') updateBook(data);
-                if (type === 'ticker') updateStats(data);
-            };
-        }
-
-        // Helpers UI
-        function updateTape(data) {
-            const row = document.createElement('div');
-            row.className = 'row';
-            row.innerHTML = `<span style="color:#555">${new Date(data.T).toLocaleTimeString().split(' ')[0]}</span><span class="${data.m?'r':'g'}">${parseFloat(data.p).toFixed(2)}</span><span style="color:#666">${parseFloat(data.q).toFixed(4)}</span>`;
-            el('tape').prepend(row);
-            if (el('tape').children.length > 20) el('tape').lastChild.remove();
-        }
-
-        function updateBook(data) {
-            renderList(data.asks, el('asks'), 'r', true);
-            renderList(data.bids, el('bids'), 'g', false);
-            el('spread').innerText = (parseFloat(data.asks[0][0]) - parseFloat(data.bids[0][0])).toFixed(2);
-        }
-
-        function renderList(list, container, color, reverse) {
-            container.innerHTML = '';
-            const arr = reverse ? list.slice(0,8).reverse() : list.slice(0,8);
-            arr.forEach(i => {
-                const d = document.createElement('div');
-                d.className = 'row';
-                d.innerHTML = `<span class="${color}">${parseFloat(i[0]).toFixed(2)}</span><span style="color:#444">${parseFloat(i[1]).toFixed(4)}</span>`;
-                container.appendChild(d);
+        // 4. TECH GAUGE
+        function loadGauge() {
+            el('gauge-container').innerHTML = "";
+            // Le widget gauge est un peu capricieux en JS pur, on utilise une iframe générée
+            // Note: C'est une astuce car l'API JS native pour la gauge est complexe
+            const script = document.createElement('script');
+            script.src = "https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js";
+            script.async = true;
+            script.innerHTML = JSON.stringify({
+                "interval": "1m",
+                "width": "100%",
+                "isTransparent": true,
+                "height": "100%",
+                "symbol": "BINANCE:" + currentPair.toUpperCase(),
+                "showIntervalTabs": false,
+                "locale": "fr",
+                "colorTheme": "dark"
             });
+            el('gauge-container').appendChild(script);
         }
 
-        function updateStats(data) {
-            el('high').innerText = parseFloat(data.h).toFixed(2);
-            el('low').innerText = parseFloat(data.l).toFixed(2);
-            el('vol').innerText = Math.floor(data.v);
-            const chg = parseFloat(data.P);
-            el('chg').innerHTML = `<span class="${chg>=0?'g':'r'}">${chg.toFixed(2)}%</span>`;
+        // --- CONTROLS ---
+
+        function changePair(pair) {
+            currentPair = pair.toLowerCase();
+            el('current-pair-disp').innerText = pair.toUpperCase();
+            el('tape').innerHTML = ""; // Clear tape
+            startStream(currentPair);
+            loadTvWidget();
+            loadGauge();
         }
 
-        // --- DEMARRAGE ---
-        loadTvWidget(currentPair);
-        startStream(currentPair);
+        function changeTf(tf) {
+            currentTimeframe = tf;
+            // Update buttons
+            document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            loadTvWidget(); // Reload chart with new TF
+        }
 
-        // Gestion Commande
-        el('pair').addEventListener('keypress', e => {
-            if (e.key === 'Enter') {
-                const val = e.target.value.toLowerCase().trim();
-                if (val) {
-                    currentPair = val;
-                    // Mise à jour des deux systèmes
-                    loadTvWidget(currentPair);
-                    startStream(currentPair);
-                }
+        // 10. FULLSCREEN TOGGLE
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
             }
-        });
+        }
+
+        // --- BOOT ---
+        initWatchlist();
+        startGlobalTicker();
+        startStream(currentPair);
+        loadTvWidget();
+        loadGauge();
 
     </script>
 </body>
