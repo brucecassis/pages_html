@@ -3,30 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLOOMBERG ENS® - TERMINAL</title>
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <title>BLOOMBERG ENS® - HYBRID TERMINAL</title>
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
         :root { --bg: #000; --amber: #ffaa00; --dim: #666; --green: #0f0; --red: #f00; --border: #333; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', monospace; }
         body { background: var(--bg); color: var(--amber); height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-size: 11px; }
 
-        /* UI ELEMENTS */
+        /* HEADER & CMD */
         .header { background: var(--amber); color: #000; padding: 4px 10px; font-weight: bold; display: flex; justify-content: space-between; }
         .cmd { background: #111; border-bottom: 1px solid var(--amber); padding: 5px; display: flex; align-items: center; }
         .cmd input { background: transparent; border: none; color: var(--amber); width: 200px; margin-left: 10px; text-transform: uppercase; font-weight: bold; outline: none; }
         
+        /* GRID LAYOUT */
         .grid { display: grid; grid-template-columns: 280px 1fr 280px; grid-template-rows: 1fr 180px; gap: 1px; background: var(--border); flex-grow: 1; }
         .panel { background: var(--bg); display: flex; flex-direction: column; overflow: hidden; position: relative; }
         .title { background: #111; padding: 4px; border-bottom: 1px solid var(--border); color: var(--dim); font-weight: bold; display: flex; justify-content: space-between; }
         
+        /* LISTS (TAPE & BOOK) */
         .list { overflow: hidden; flex-grow: 1; }
         .row { display: flex; justify-content: space-between; padding: 1px 5px; }
         .g { color: var(--green); } .r { color: var(--red); }
 
-        /* CHART & ERROR HANDLING */
-        #chart { width: 100%; height: 100%; position: relative; }
-        #chart-msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #444; text-align: center; font-size: 14px; pointer-events: none; }
+        /* TRADINGVIEW CONTAINER */
+        #tv-container { width: 100%; height: 100%; }
         
+        /* STATS */
         .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px; }
         .box { border: 1px solid var(--border); padding: 5px; }
         .val { font-size: 13px; font-weight: bold; }
@@ -58,12 +60,10 @@
 
         <div class="panel">
             <div class="title">
-                <span>CHART (1M LIVE)</span>
-                <span id="price" style="color:var(--amber)">WAITING...</span>
+                <span>CHART (TRADINGVIEW)</span>
+                <span style="color:var(--amber)">LIVE FEED</span>
             </div>
-            <div id="chart">
-                <div id="chart-msg">INITIALIZING SYSTEM...</div>
-            </div>
+            <div id="tv-container"></div>
         </div>
 
         <div class="panel" style="grid-row: span 2;">
@@ -83,15 +83,13 @@
     </div>
 
     <div class="foot">
-        <div id="status">● SYSTEM BOOT...</div>
-        <div>BINANCE WSS</div>
+        <div id="status">● SYSTEM READY</div>
+        <div>BINANCE WSS • TV WIDGET</div>
     </div>
 
     <script>
         // CONFIG
         let ws = null;
-        let chart = null;
-        let series = null;
         let currentPair = 'btcusdt';
         const el = id => document.getElementById(id);
         const log = msg => el('status').innerText = "● " + msg;
@@ -99,12 +97,40 @@
         // HORLOGE
         setInterval(() => el('time').innerText = new Date().toISOString().split('T')[1].split('.')[0] + ' UTC', 1000);
 
-        // 1. WEBSOCKET (PRIORITÉ ABSOLUE : On lance ça en premier)
+        // 1. INITIALISER TRADINGVIEW
+        function loadTvWidget(pair) {
+            // Nettoyage conteneur
+            el('tv-container').innerHTML = "";
+            
+            new TradingView.widget({
+                "autosize": true,
+                "symbol": "BINANCE:" + pair.toUpperCase(),
+                "interval": "1",
+                "timezone": "Etc/UTC",
+                "theme": "dark",
+                "style": "1",
+                "locale": "fr",
+                "toolbar_bg": "#000000",
+                "enable_publishing": false,
+                "hide_top_toolbar": false,
+                "hide_side_toolbar": false,
+                "allow_symbol_change": false, // On force l'utilisateur à utiliser notre barre de commande
+                "container_id": "tv-container",
+                "overrides": {
+                    "paneProperties.background": "#000000",
+                    "paneProperties.vertGridProperties.color": "#111",
+                    "paneProperties.horzGridProperties.color": "#111",
+                }
+            });
+        }
+
+        // 2. WEBSOCKET (Données annexes : Tape, Book, Stats)
         function startStream(pair) {
             if (ws) ws.close();
-            log("CONNECTING STREAM...");
+            log("SYNCING DATA...");
             
-            const streams = [`${pair}@kline_1m`, `${pair}@depth10`, `${pair}@trade`, `${pair}@ticker`].join('/');
+            // On retire le flux 'kline' car TradingView s'en occupe
+            const streams = [`${pair}@depth10`, `${pair}@trade`, `${pair}@ticker`].join('/');
             ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
 
             ws.onopen = () => { log("STREAM ACTIVE"); el('status').style.color = "#0f0"; };
@@ -115,25 +141,9 @@
                 const data = msg.data;
                 const type = msg.stream.split('@')[1];
 
-                // Mise à jour UI Data (Trades, Book, Stats)
                 if (type === 'trade') updateTape(data);
                 if (type === 'depth10') updateBook(data);
                 if (type === 'ticker') updateStats(data);
-                
-                // Mise à jour Graphique (Si disponible)
-                if (type === 'kline_1m' && series) {
-                    const k = data.k;
-                    // FIX IMPORTANT : Math.floor pour le timestamp
-                    const candle = {
-                        time: Math.floor(k.t / 1000), 
-                        open: parseFloat(k.o), high: parseFloat(k.h), low: parseFloat(k.l), close: parseFloat(k.c)
-                    };
-                    try {
-                        series.update(candle);
-                        el('chart-msg').style.display = 'none';
-                        el('price').innerText = `${pair.toUpperCase()} : ${parseFloat(k.c).toFixed(2)}`;
-                    } catch(e) { console.log(e); }
-                }
             };
         }
 
@@ -171,49 +181,18 @@
             el('chg').innerHTML = `<span class="${chg>=0?'g':'r'}">${chg.toFixed(2)}%</span>`;
         }
 
-        // 2. CHART INIT (ISOLÉ : Si ça plante, ça ne coupe pas le reste)
-        function tryInitChart() {
-            try {
-                if (!window.LightweightCharts) throw new Error("Lib Missing");
-                
-                chart = LightweightCharts.createChart(el('chart'), {
-                    layout: { background: { color: '#000000' }, textColor: '#ffaa00' },
-                    grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
-                    timeScale: { borderColor: '#333', timeVisible: true }
-                });
-                series = chart.addCandlestickSeries({
-                    upColor: '#0f0', downColor: '#f00', borderVisible: false, wickUpColor: '#0f0', wickDownColor: '#f00'
-                });
-                
-                new ResizeObserver(e => {
-                    if (e.length && chart) chart.applyOptions({ width: e[0].contentRect.width, height: e[0].contentRect.height });
-                }).observe(el('chart'));
-                
-                el('chart-msg').innerText = "WAITING FOR NEXT CANDLE...";
-            } catch (e) {
-                console.error(e);
-                el('chart-msg').innerText = "CHART ERROR (Check Console)";
-                el('chart-msg').style.color = "red";
-            }
-        }
-
-        // --- SEQUENCE DE DEMARRAGE ---
-        
-        // A. On lance la connexion TOUT DE SUITE
+        // --- DEMARRAGE ---
+        loadTvWidget(currentPair);
         startStream(currentPair);
 
-        // B. On essaie de charger le graphique après
-        tryInitChart();
-
-        // C. Gestion Input
+        // Gestion Commande
         el('pair').addEventListener('keypress', e => {
             if (e.key === 'Enter') {
                 const val = e.target.value.toLowerCase().trim();
                 if (val) {
                     currentPair = val;
-                    if(series) series.setData([]);
-                    el('chart-msg').style.display = 'block';
-                    el('chart-msg').innerText = "LOADING NEW PAIR...";
+                    // Mise à jour des deux systèmes
+                    loadTvWidget(currentPair);
                     startStream(currentPair);
                 }
             }
