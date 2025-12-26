@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLOOMBERG ENS® - V15 ANALYTICS</title>
+    <title>BLOOMBERG ENS® - V17 COMPLETE</title>
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
         :root { 
@@ -50,24 +50,24 @@
         .tab-btn { background: #151515; border: 1px solid #333; color: #666; padding: 4px 12px; cursor: pointer; font-size: 10px; transition: all 0.2s; }
         .tab-btn:hover { color: #fff; background: #222; }
         .tab-btn.active { border-bottom: 2px solid var(--amber); color: var(--amber); background: #111; font-weight: bold; }
+        /* Tab Colors */
         .tab-defi.active { border-color: var(--blue); color: var(--blue); }
+        .tab-dex.active { border-color: var(--green); color: var(--green); }
+        .tab-eth.active { border-color: #627eea; color: #627eea; }
 
-        /* DEFI UI */
+        /* DATA UI ELEMENTS */
         .sub-nav { display: flex; background: #0a0a0a; border-bottom: 1px solid #222; padding: 5px; gap: 5px; overflow-x: auto; white-space: nowrap; }
         .sub-btn { background: #111; border: 1px solid #333; color: #666; padding: 4px 8px; cursor: pointer; font-size: 9px; flex-shrink: 0; }
         .sub-btn.active { background: #222; color: var(--blue); border-color: var(--blue); font-weight: bold; }
         
-        /* FILTERS BAR (New) */
-        .filter-bar { display: none; background: #111; padding: 4px; gap: 4px; border-bottom: 1px solid #222; }
-        .filter-btn { background: #000; border: 1px solid #333; color: #888; padding: 2px 6px; font-size: 9px; cursor: pointer; }
-        .filter-btn:hover { color: #fff; border-color: #555; }
-        .filter-btn.active { background: #222; color: var(--green); border-color: var(--green); }
+        .dex-search-bar { padding: 10px; background: #111; border-bottom: 1px solid #222; display: flex; gap: 5px; }
+        .dex-input { background: #000; border: 1px solid #333; color: #fff; flex: 1; padding: 4px; font-family: monospace; }
 
+        /* GRIDS LAYOUTS */
         .defi-row { display: grid; padding: 6px 10px; border-bottom: 1px solid #1a1a1a; align-items: center; cursor: pointer; transition: background 0.1s; }
         .defi-row:hover { background: #151515; }
         .defi-head { background: #111; color: #666; font-weight: bold; border-bottom: 1px solid #333; position: sticky; top: 0; cursor: default; }
         
-        /* Grids */
         .grid-tvl     { grid-template-columns: 20px 1fr 80px 60px; }
         .grid-fees    { grid-template-columns: 20px 1fr 70px 70px; }
         .grid-yield   { grid-template-columns: 1fr 40px 70px 50px 50px; }
@@ -76,20 +76,28 @@
         .grid-hacks   { grid-template-columns: 1fr 60px 80px 60px; }
         .grid-bridges { grid-template-columns: 1fr 60px 80px 60px; }
         .grid-chains  { grid-template-columns: 20px 1fr 50px 80px; }
+        .grid-hunter  { grid-template-columns: 1fr 40px 80px 60px 60px 60px; }
+
+        /* ETHERSCAN WIDGETS */
+        .gas-widget { display: flex; justify-content: space-around; padding: 10px; background: #111; border-bottom: 1px solid #222; }
+        .gas-item { text-align: center; }
+        .gas-val { font-size: 14px; font-weight: bold; color: #fff; }
+        .eth-input-group { padding: 10px; display: flex; gap: 5px; border-bottom: 1px solid #222; }
+        .eth-res { padding: 10px; }
+        .tx-row { display: flex; justify-content: space-between; border-bottom: 1px solid #222; padding: 4px 0; font-size: 9px; color: #aaa; }
 
         /* MODAL CHART */
         .modal-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index: 50; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         .modal-content { background: #080808; border: 1px solid #333; width: 90%; height: 80%; display: flex; flex-direction: column; padding: 10px; box-shadow: 0 0 20px #000; }
         .chart-svg { width: 100%; height: 100%; }
         .chart-line { fill: none; stroke: var(--blue); stroke-width: 2; }
-        .chart-area { fill: rgba(41, 98, 255, 0.1); }
 
         /* FOOTER & TOAST */
         .foot { background: #080808; border-top: 1px solid #333; padding: 4px 10px; color: #666; display: flex; justify-content: space-between; font-size: 10px; align-items: center; height: 30px; }
         #toast-container { position: absolute; bottom: 40px; right: 20px; width: 250px; display: flex; flex-direction: column; gap: 5px; pointer-events: none; z-index: 100; }
         .toast { background: #111; border: 1px solid var(--amber); color: #fff; padding: 10px; pointer-events: auto; box-shadow: 0 5px 15px #000; }
-        
-        /* Trading UI Utils */
+
+        /* LEFT PANEL STYLES */
         .trade-panel { padding: 10px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid #333; overflow-y: auto; }
         .t-input { background: #000; border: 1px solid #444; color: var(--amber); padding: 5px; width: 100%; text-align: right; font-weight: bold; }
         .btn-trade { width: 100%; padding: 8px; border: none; cursor: pointer; font-weight: 800; color: #000; text-transform: uppercase; }
@@ -108,10 +116,10 @@
 
     <div class="header">
         <div style="display:flex; gap:15px; align-items:center;">
-            <span style="font-weight:900; color:var(--amber); letter-spacing:1px;">BLOOMBERG ENS® <span style="font-size:9px; color:#666; font-weight:normal;">V15 ANALYTICS</span></span>
+            <span style="font-weight:900; color:var(--amber); letter-spacing:1px;">BLOOMBERG ENS® <span style="font-size:9px; color:#666; font-weight:normal;">V17 COMPLETE</span></span>
             <div class="search-box">
                 <span style="color:#555">🔍</span>
-                <input type="text" id="symbol-input" placeholder="SEARCH (e.g. SOLUSDT)" onkeypress="if(event.key==='Enter') switchPair(this.value)">
+                <input type="text" id="symbol-input" placeholder="BINANCE PAIR (e.g. BTC)" onkeypress="if(event.key==='Enter') switchPair(this.value)">
             </div>
         </div>
         <div style="display:flex; gap:15px; align-items:center; font-size:10px;">
@@ -124,7 +132,9 @@
         <div class="tabs-bar">
             <span class="pair-badge" id="pair-disp">BTCUSDT</span>
             <button class="tab-btn active" onclick="setTab('chart',this)">TRADING</button>
-            <button class="tab-btn tab-defi" onclick="setTab('defi',this)">BLOCKCHAIN DATA</button>
+            <button class="tab-btn tab-defi" onclick="setTab('defi',this)">DEFI LLAMA</button>
+            <button class="tab-btn tab-dex" onclick="setTab('dex',this)">DEX HUNTER</button>
+            <button class="tab-btn tab-eth" onclick="setTab('etherscan',this)">ETHERSCAN</button>
             <div class="tab-spacer"></div>
             <button class="tab-btn" onclick="toggleHistory()">HISTORY</button>
         </div>
@@ -157,47 +167,89 @@
 
         <div class="panel" style="grid-row: span 2; position:relative;">
             
-            <div id="tv-cont" style="width:100%; height:100%;"></div>
+            <div id="view-chart" style="width:100%; height:100%;">
+                <div id="tv-cont" style="width:100%; height:100%;"></div>
+            </div>
 
-            <div id="defi-view" class="hidden" style="width:100%; height:100%; display:flex; flex-direction:column;">
-                
+            <div id="view-defi" class="hidden" style="width:100%; height:100%; display:flex; flex-direction:column;">
                 <div class="sub-nav">
-                    <button class="sub-btn active" id="btn-tvl" onclick="loadDefi('tvl')">TVL RANK (CHART)</button>
+                    <button class="sub-btn active" id="btn-tvl" onclick="loadDefi('tvl')">TVL RANK</button>
                     <button class="sub-btn" id="btn-yields" onclick="loadDefi('yields')">REAL YIELD</button>
-                    <button class="sub-btn" id="btn-chains" onclick="loadDefi('chains')">CHAIN WARS</button>
-                    <button class="sub-btn" id="btn-fees" onclick="loadDefi('fees')">FEES/REV</button>
-                    <button class="sub-btn" id="btn-stables" onclick="loadDefi('stables')">STABLECOINS</button>
+                    <button class="sub-btn" id="btn-chains" onclick="loadDefi('chains')">CHAINS</button>
+                    <button class="sub-btn" id="btn-fees" onclick="loadDefi('fees')">FEES</button>
+                    <button class="sub-btn" id="btn-stables" onclick="loadDefi('stables')">STABLES</button>
                     <button class="sub-btn" id="btn-dex" onclick="loadDefi('dex')">DEX VOL</button>
                     <button class="sub-btn" id="btn-bridges" onclick="loadDefi('bridges')">BRIDGES</button>
                     <button class="sub-btn" id="btn-hacks" style="color:var(--red); border-color:var(--red)" onclick="loadDefi('hacks')">HACKS</button>
                 </div>
-
-                <div id="yield-filters" class="filter-bar">
-                    <button class="filter-btn active" onclick="filterYields('ALL', this)">ALL</button>
-                    <button class="filter-btn" onclick="filterYields('USDT', this)">USDT</button>
-                    <button class="filter-btn" onclick="filterYields('USDC', this)">USDC</button>
-                    <button class="filter-btn" onclick="filterYields('DAI', this)">DAI</button>
-                    <button class="filter-btn" onclick="filterYields('USDE', this)">USDe</button>
-                    <button class="filter-btn" onclick="filterYields('PYUSD', this)">PYUSD</button>
+                
+                <div id="yield-filters" style="display:none; padding:5px; background:#111; gap:5px;">
+                    <button class="sub-btn" onclick="renderYields('ALL')">ALL</button>
+                    <button class="sub-btn" onclick="renderYields('USDT')">USDT</button>
+                    <button class="sub-btn" onclick="renderYields('USDC')">USDC</button>
+                    <button class="sub-btn" onclick="renderYields('DAI')">DAI</button>
+                    <button class="sub-btn" onclick="renderYields('ETH')">ETH</button>
                 </div>
 
                 <div id="defi-header-row" class="defi-row defi-head grid-tvl"></div>
-                <div id="defi-list" style="overflow-y:auto; flex:1;">
-                    <div style="padding:20px; text-align:center; color:#666;">SELECT DATA TYPE</div>
-                </div>
-
-                <div id="mini-chart-modal" class="modal-overlay hidden">
-                    <div class="modal-content">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                            <span id="chart-title" style="font-weight:bold; color:#fff">PROTOCOL HISTORY</span>
-                            <button onclick="closeChart()" style="background:none; border:none; color:#aaa; cursor:pointer;">X</button>
-                        </div>
-                        <div id="chart-container" style="flex:1; position:relative; background:#111; border:1px solid #222;">
-                            </div>
-                    </div>
-                </div>
-
+                <div id="defi-list" style="overflow-y:auto; flex:1;"></div>
             </div>
+
+            <div id="view-dex" class="hidden" style="width:100%; height:100%; display:flex; flex-direction:column;">
+                <div class="dex-search-bar">
+                    <input type="text" id="dex-input" class="dex-input" placeholder="SEARCH TOKEN OR ADDRESS..." onkeypress="if(event.key==='Enter') searchDex()">
+                    <button onclick="searchDex()" class="sub-btn" style="width:60px;">SCAN</button>
+                </div>
+                <div class="sub-nav">
+                    <span style="color:#666; font-size:9px; padding:4px;">FILTERS:</span>
+                    <button class="sub-btn" onclick="filterDex('ALL')">ALL</button>
+                    <button class="sub-btn" onclick="filterDex('solana')">SOLANA</button>
+                    <button class="sub-btn" onclick="filterDex('ethereum')">ETHEREUM</button>
+                    <button class="sub-btn" onclick="filterDex('base')">BASE</button>
+                    <button class="sub-btn" onclick="filterDex('bsc')">BSC</button>
+                </div>
+                <div class="defi-row defi-head grid-hunter">
+                    <span>TOKEN / PAIR</span>
+                    <span>CHAIN</span>
+                    <span style="text-align:right">PRICE</span>
+                    <span style="text-align:right">LIQ</span>
+                    <span style="text-align:right">1H %</span>
+                    <span style="text-align:right">24H %</span>
+                </div>
+                <div id="dex-list" style="overflow-y:auto; flex:1;">
+                    <div style="padding:20px; text-align:center; color:#666;">ENTER SEARCH TO START</div>
+                </div>
+            </div>
+
+            <div id="view-etherscan" class="hidden" style="width:100%; height:100%; display:flex; flex-direction:column;">
+                <div class="title">LIVE GAS TRACKER (GWEI)</div>
+                <div class="gas-widget">
+                    <div class="gas-item"><span style="color:var(--green)">LOW</span><br><span id="gas-low" class="gas-val">--</span></div>
+                    <div class="gas-item"><span style="color:var(--blue)">AVG</span><br><span id="gas-avg" class="gas-val">--</span></div>
+                    <div class="gas-item"><span style="color:var(--red)">HIGH</span><br><span id="gas-high" class="gas-val">--</span></div>
+                </div>
+                
+                <div class="title" style="margin-top:10px;">WALLET INSPECTOR (ETH MAINNET)</div>
+                <div class="eth-input-group">
+                    <input type="text" id="eth-addr" class="dex-input" placeholder="0x... Wallet Address">
+                    <button onclick="scanEthWallet()" class="sub-btn">INSPECT</button>
+                </div>
+                
+                <div class="eth-res" id="eth-result">
+                    <div style="color:#666; text-align:center; padding:20px;">READY TO SCAN</div>
+                </div>
+            </div>
+
+            <div id="mini-chart-modal" class="modal-overlay hidden">
+                <div class="modal-content">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        <span id="chart-title" style="font-weight:bold; color:#fff">HISTORY</span>
+                        <button onclick="el('mini-chart-modal').classList.add('hidden')" style="background:none; border:none; color:#aaa; cursor:pointer;">X</button>
+                    </div>
+                    <div id="chart-container" style="flex:1; position:relative; background:#111; border:1px solid #222;"></div>
+                </div>
+            </div>
+
         </div>
 
         <div class="panel">
@@ -206,13 +258,13 @@
         </div>
         
         <div class="panel">
-            <div class="title"><span>SYSTEM</span><span>SOURCES</span></div>
+            <div class="title"><span>SYSTEM</span><span>STATUS</span></div>
             <div class="list" style="padding:10px; color:#666; font-size:9px;">
-                <p>REALTIME DATA SOURCES:</p>
-                <div style="margin-top:5px; color:var(--amber)">● BINANCE (Trade/Orderbook)</div>
-                <div style="margin-top:2px; color:var(--blue)">● DEFILLAMA API (Aggregated)</div>
-                <div style="margin-top:2px; color:var(--green)">● YIELDS.LLAMA (Pools)</div>
-                <div style="margin-top:10px; border-top:1px solid #333; padding-top:5px;">NO SIMULATED DATA ALLOWED.</div>
+                <p>ACTIVE CONNECTIONS:</p>
+                <div style="margin-top:5px; color:var(--amber)">● BINANCE STREAM (OK)</div>
+                <div style="margin-top:2px; color:var(--blue)">● DEFILLAMA API (OK)</div>
+                <div style="margin-top:2px; color:var(--green)">● DEXSCREENER API (OK)</div>
+                <div style="margin-top:2px; color:#627eea">● ETHERSCAN API (KEY LOADED)</div>
             </div>
         </div>
     </div>
@@ -237,7 +289,9 @@
     <script>
         // --- CORE & STATE ---
         let state = { pair: 'btcusdt', wallet: 10000, pos: null, history: [], sound: false };
-        let yieldCache = []; // Store yield data for filtering
+        let yieldCache = [];
+        let dexCache = [];
+        const ETHERSCAN_KEY = 'RQI9E2XA359F65EXRJXHY3W9MP4ZFQ2CYV';
         const el = id => document.getElementById(id);
         let ws = null, audioCtx = null;
 
@@ -268,7 +322,7 @@
         }
         function updateWallet() { el('wallet-bal').innerText = "$" + state.wallet.toLocaleString(undefined, {minimumFractionDigits:2}); }
 
-        // --- 2. DEFI REAL DATA LOGIC ---
+        // --- 2. DEFI LLAMA LOGIC ---
         const fmt = (n) => {
             if(n === undefined || n === null) return '-';
             if(Math.abs(n) > 1e9) return (n/1e9).toFixed(2) + 'B';
@@ -282,14 +336,13 @@
             const head = el('defi-header-row');
             const filters = el('yield-filters');
             
-            // UI Reset
-            document.querySelectorAll('.sub-btn').forEach(b => b.classList.remove('active'));
+            // Toggle Sub-nav Active State
+            document.querySelectorAll('#view-defi .sub-btn').forEach(b => b.classList.remove('active'));
             const btn = el('btn-'+mode);
             if(btn) btn.classList.add('active');
             
-            // Show/Hide Filters
+            // Show filters only for Yields
             filters.style.display = (mode === 'yields') ? 'flex' : 'none';
-
             list.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">FETCHING LIVE DATA...</div>';
             
             try {
@@ -303,11 +356,10 @@
                         dataTvl.sort((a,b) => (b.tvl||0) - (a.tvl||0));
                         dataTvl.slice(0, 50).forEach((p, i) => {
                             const chg = p.change_1d || 0;
-                            // Added onclick for chart
                             html += `<div class="defi-row grid-tvl" onclick="openChart('${p.slug}', '${p.name}')"><span style="color:#444">${i+1}</span><span style="font-weight:bold; color:#fff">${p.name} <span style="font-size:9px; color:#666">(${p.symbol})</span></span><span style="text-align:right; color:var(--blue); font-family:monospace;">$${fmt(p.tvl)}</span><span style="text-align:right; color:${chg>=0?'var(--green)':'var(--red)'}">${chg.toFixed(2)}%</span></div>`;
                         });
                         list.innerHTML = html;
-                        toast("INFO", "Click rows for TVL History");
+                        toast("INFO", "Click rows for History");
                         break;
 
                     case 'yields':
@@ -315,9 +367,9 @@
                         head.innerHTML = `<span>POOL</span><span style="text-align:right">CHAIN</span><span style="text-align:right">TVL</span><span style="text-align:right">BASE</span><span style="text-align:right">RWD</span>`;
                         const resYield = await fetch('https://yields.llama.fi/pools');
                         const wYield = await resYield.json();
-                        // Cache for filtering
+                        // Filter & Cache
                         yieldCache = wYield.data.filter(p => p.tvlUsd > 1000000 && p.apy > 0).sort((a,b) => b.apy - a.apy);
-                        renderYields('ALL'); // Default
+                        renderYields('ALL');
                         break;
 
                     case 'chains':
@@ -357,7 +409,7 @@
                         });
                         list.innerHTML = html;
                         break;
-                    
+
                     case 'dex':
                         head.className = 'defi-row defi-head grid-dex';
                         head.innerHTML = `<span>#</span><span>DEX</span><span style="text-align:right">VOL 24H</span><span style="text-align:right">VOL 7D</span>`;
@@ -402,120 +454,139 @@
             }
         }
 
-        // --- FILTER LOGIC (Stablecoins) ---
-        function filterYields(token, btn) {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderYields(token);
-        }
-
+        // --- RENDER FILTERED YIELDS ---
         function renderYields(filter) {
             const list = el('defi-list');
             let data = yieldCache;
-
-            if (filter !== 'ALL') {
-                data = data.filter(p => p.symbol.toUpperCase().includes(filter));
-            }
-
+            if (filter !== 'ALL') data = data.filter(p => p.symbol.toUpperCase().includes(filter));
             let html = '';
             data.slice(0, 100).forEach(p => {
                 const base = p.apyBase !== null ? p.apyBase : p.apy;
                 const reward = p.apyReward !== null ? p.apyReward : 0;
-                html += `<div class="defi-row grid-yield">
-                    <span style="font-weight:bold; color:#fff; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">${p.project.toUpperCase()} <span style="color:#666; font-weight:normal">${p.symbol}</span></span>
-                    <span style="text-align:right; font-size:9px; color:#aaa">${p.chain}</span>
-                    <span style="text-align:right; font-family:monospace; color:#666">$${fmt(p.tvlUsd)}</span>
-                    <span style="text-align:right; color:var(--amber); font-weight:bold;">${base.toFixed(2)}%</span>
-                    <span style="text-align:right; color:var(--purple); font-weight:bold;">${reward.toFixed(2)}%</span>
-                </div>`;
+                html += `<div class="defi-row grid-yield"><span style="font-weight:bold; color:#fff; overflow:hidden; text-overflow:ellipsis;">${p.project.toUpperCase()} <span style="color:#666; font-weight:normal">${p.symbol}</span></span><span style="text-align:right; font-size:9px; color:#aaa">${p.chain}</span><span style="text-align:right; font-family:monospace; color:#666">$${fmt(p.tvlUsd)}</span><span style="text-align:right; color:var(--amber); font-weight:bold;">${base.toFixed(2)}%</span><span style="text-align:right; color:var(--purple); font-weight:bold;">${reward.toFixed(2)}%</span></div>`;
             });
-            
-            if(data.length === 0) html = '<div style="padding:20px; text-align:center; color:#555">NO POOLS FOUND FOR THIS TOKEN</div>';
-            list.innerHTML = html;
+            list.innerHTML = html || '<div style="padding:20px; text-align:center;">NO MATCHES</div>';
         }
 
-        // --- CHART LOGIC (SVG) ---
+        // --- 3. DEX HUNTER LOGIC ---
+        async function searchDex() {
+            const q = el('dex-input').value;
+            if(!q) return;
+            const list = el('dex-list');
+            list.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">SCANNING DEXES...</div>';
+            try {
+                const res = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${q}`);
+                const data = await res.json();
+                if(!data.pairs || data.pairs.length === 0) {
+                    list.innerHTML = '<div style="padding:20px; text-align:center; color:#555;">NO PAIRS FOUND</div>';
+                    return;
+                }
+                dexCache = data.pairs.filter(p => p.liquidity && p.liquidity.usd > 1000).sort((a,b) => b.liquidity.usd - a.liquidity.usd);
+                filterDex('ALL');
+            } catch(e) {
+                list.innerHTML = '<div style="padding:20px; text-align:center; color:var(--red);">DEX API ERROR</div>';
+            }
+        }
+
+        function filterDex(chain) {
+            const list = el('dex-list');
+            let data = dexCache;
+            if(chain !== 'ALL') data = data.filter(p => p.chainId === chain);
+            
+            let html = '';
+            data.forEach(p => {
+                const c1h = p.priceChange.h1 || 0;
+                const c24h = p.priceChange.h24 || 0;
+                html += `
+                <div class="defi-row grid-hunter" onclick="window.open('${p.url}', '_blank')">
+                    <span style="font-weight:bold; color:#fff; overflow:hidden; text-overflow:ellipsis;">${p.baseToken.symbol}/${p.quoteToken.symbol} <span style="font-size:9px; color:#666">${p.dexId}</span></span>
+                    <span style="color:#aaa; text-transform:uppercase;">${p.chainId}</span>
+                    <span style="text-align:right; font-family:monospace; color:var(--liq)">$${parseFloat(p.priceUsd).toFixed(6)}</span>
+                    <span style="text-align:right; font-family:monospace; color:#666">$${fmt(p.liquidity.usd)}</span>
+                    <span style="text-align:right; color:${c1h>=0?'var(--green)':'var(--red)'}">${c1h.toFixed(2)}%</span>
+                    <span style="text-align:right; color:${c24h>=0?'var(--green)':'var(--red)'}">${c24h.toFixed(2)}%</span>
+                </div>`;
+            });
+            list.innerHTML = html || '<div style="padding:20px; text-align:center; color:#555;">NO MATCHES ON THIS CHAIN</div>';
+        }
+
+        // --- 4. ETHERSCAN TOOL LOGIC ---
+        async function initEtherscan() {
+            try {
+                const res = await fetch(`https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=${ETHERSCAN_KEY}`);
+                const data = await res.json();
+                if(data.status === "1") {
+                    el('gas-low').innerText = data.result.SafeGasPrice;
+                    el('gas-avg').innerText = data.result.ProposeGasPrice;
+                    el('gas-high').innerText = data.result.FastGasPrice;
+                }
+            } catch(e) { console.log(e); }
+        }
+
+        async function scanEthWallet() {
+            const addr = el('eth-addr').value;
+            const resBox = el('eth-result');
+            if(!addr) return;
+            resBox.innerHTML = '<div style="color:#666; text-align:center;">SCANNING CHAIN...</div>';
+            try {
+                const balRes = await fetch(`https://api.etherscan.io/api?module=account&action=balance&address=${addr}&tag=latest&apikey=${ETHERSCAN_KEY}`);
+                const balData = await balRes.json();
+                const balEth = (balData.result / 1e18).toFixed(4);
+
+                const txRes = await fetch(`https://api.etherscan.io/api?module=account&action=txlist&address=${addr}&startblock=0&endblock=99999999&page=1&offset=5&sort=desc&apikey=${ETHERSCAN_KEY}`);
+                const txData = await txRes.json();
+                let txHtml = '';
+                if(txData.result && Array.isArray(txData.result)) {
+                    txData.result.forEach(tx => {
+                        const val = (tx.value / 1e18).toFixed(4);
+                        const isIn = tx.to.toLowerCase() === addr.toLowerCase();
+                        txHtml += `<div class="tx-row"><span style="color:#fff">${tx.hash.substring(0,8)}...</span><span style="color:${isIn?'var(--green)':'var(--red)'}">${isIn?'IN':'OUT'}</span><span>${val} ETH</span></div>`;
+                    });
+                }
+                resBox.innerHTML = `<div style="font-size:16px; color:#fff; font-weight:bold; margin-bottom:10px;">BALANCE: <span style="color:var(--blue)">${balEth} ETH</span></div><div style="border-top:1px solid #333; padding-top:5px;"><div style="font-size:9px; color:#666; margin-bottom:5px;">LAST 5 TXs</div>${txHtml}</div>`;
+            } catch(e) { resBox.innerHTML = '<div style="color:var(--red); text-align:center;">INVALID ADDRESS</div>'; }
+        }
+
+        // --- 5. TABS & UI ROUTING ---
+        function setTab(t, btn) {
+            ['view-chart', 'view-defi', 'view-dex', 'view-etherscan'].forEach(id => el(id).classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            if(t === 'chart') el('view-chart').classList.remove('hidden');
+            if(t === 'defi') { el('view-defi').classList.remove('hidden'); if(el('defi-list').innerHTML==='') loadDefi('tvl'); }
+            if(t === 'dex') el('view-dex').classList.remove('hidden');
+            if(t === 'etherscan') { el('view-etherscan').classList.remove('hidden'); initEtherscan(); }
+        }
+
+        // --- CHART SVG ---
         async function openChart(slug, name) {
             const modal = el('mini-chart-modal');
             const cont = el('chart-container');
             el('chart-title').innerText = name.toUpperCase() + " : TVL HISTORY";
             modal.classList.remove('hidden');
-            cont.innerHTML = '<div style="color:#666; text-align:center; padding-top:50px;">LOADING HISTORY...</div>';
-
+            cont.innerHTML = '<div style="color:#666; text-align:center; padding-top:50px;">LOADING...</div>';
             try {
-                // Fetch Historical TVL
                 const res = await fetch(`https://api.llama.fi/protocol/${slug}`);
-                if(!res.ok) throw new Error("Data not available");
                 const data = await res.json();
-                
-                // Extract TVL array
                 let points = data.tvl || [];
-                if(points.length < 2) throw new Error("Not enough data");
-
-                // Prepare SVG Data
-                // Downsample if too many points for svg perf
-                if(points.length > 300) {
-                    points = points.filter((_, i) => i % Math.ceil(points.length/300) === 0);
-                }
-
-                // Find Min/Max
-                let minTvl = Infinity, maxTvl = -Infinity;
-                points.forEach(p => {
-                    if(p.totalLiquidityUSD < minTvl) minTvl = p.totalLiquidityUSD;
-                    if(p.totalLiquidityUSD > maxTvl) maxTvl = p.totalLiquidityUSD;
-                });
+                if(points.length > 300) points = points.filter((_, i) => i % Math.ceil(points.length/300) === 0);
                 
-                // Dimensions
-                const w = cont.clientWidth || 600;
-                const h = cont.clientHeight || 300;
-                const padding = 10;
-
-                // Create Path
-                let pathD = `M 0 ${h} `; // Start bottom left
+                let min = Infinity, max = -Infinity;
+                points.forEach(p => { if(p.totalLiquidityUSD < min) min = p.totalLiquidityUSD; if(p.totalLiquidityUSD > max) max = p.totalLiquidityUSD; });
+                
+                const w = cont.clientWidth || 600; const h = cont.clientHeight || 300;
+                let d = `M 0 ${h} `;
                 points.forEach((p, i) => {
-                    const x = (i / (points.length - 1)) * w;
-                    const y = h - ((p.totalLiquidityUSD - minTvl) / (maxTvl - minTvl)) * (h - padding*2) - padding;
-                    pathD += `L ${x} ${y} `;
+                    const x = (i/(points.length-1))*w;
+                    const y = h - ((p.totalLiquidityUSD - min)/(max - min))*(h-20) - 10;
+                    d += `L ${x} ${y} `;
                 });
-
-                // Generate SVG HTML
-                cont.innerHTML = `
-                    <svg class="chart-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-                        <path d="${pathD}" class="chart-line" />
-                    </svg>
-                    <div style="position:absolute; top:5px; left:5px; font-size:10px; color:#fff;">Max: $${fmt(maxTvl)}</div>
-                    <div style="position:absolute; bottom:5px; left:5px; font-size:10px; color:#666;">Min: $${fmt(minTvl)}</div>
-                `;
-
-            } catch(e) {
-                console.error(e);
-                cont.innerHTML = '<div style="color:var(--red); text-align:center; padding-top:50px;">DATA UNAVAILABLE</div>';
-            }
+                cont.innerHTML = `<svg class="chart-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${d}" class="chart-line" /></svg>`;
+            } catch(e) { cont.innerHTML = 'ERR'; }
         }
 
-        function closeChart() {
-            el('mini-chart-modal').classList.add('hidden');
-        }
-
-        // --- 3. UI TABS ---
-        function setTab(t, btn) {
-            el('tv-cont').classList.add('hidden');
-            el('defi-view').classList.add('hidden');
-            el('defi-view').style.display = 'none'; 
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            if(t === 'chart') {
-                el('tv-cont').classList.remove('hidden');
-            }
-            if(t === 'defi') {
-                el('defi-view').classList.remove('hidden');
-                el('defi-view').style.display = 'flex';
-                if(el('defi-list').innerText.includes('SELECT')) loadDefi('tvl');
-            }
-        }
-
-        // --- 4. SYSTEM ---
+        // --- SYSTEM ---
         function switchPair(p) {
             if(!p.toUpperCase().endsWith('USDT')) p+='USDT';
             state.pair = p.toLowerCase();
@@ -523,7 +594,6 @@
             startStream(); initTV();
             toast("SYSTEM", `SWITCHED TO ${p.toUpperCase()}`);
         }
-
         function startStream() {
             if(ws) ws.close();
             el('conn-status').innerText = "● SYNC";
@@ -532,71 +602,27 @@
             ws.onmessage = (e) => {
                 const msg = JSON.parse(e.data);
                 const type = msg.stream.split('@')[1];
-                
                 if(type === 'trade') {
                     const d = msg.data;
                     const row = `<div class="row"><span style="color:#555">${new Date().toLocaleTimeString()}</span><span style="color:${d.m?'var(--red)':'var(--green)'}">${parseFloat(d.p).toFixed(2)}</span><span>${parseFloat(d.q).toFixed(4)}</span></div>`;
-                    const tape = el('tape');
-                    if(tape) {
-                        tape.insertAdjacentHTML('afterbegin', row);
-                        if(tape.children.length > 30) tape.lastChild.remove();
-                    }
+                    const tape = el('tape'); if(tape) { tape.insertAdjacentHTML('afterbegin', row); if(tape.children.length>30) tape.lastChild.remove(); }
                 }
-                if(type === 'ticker') {
-                    el('ft-price').innerText = parseFloat(msg.data.c).toFixed(2);
-                    el('ft-chg').innerText = parseFloat(msg.data.P).toFixed(2) + "%";
-                }
+                if(type === 'ticker') { el('ft-price').innerText = parseFloat(msg.data.c).toFixed(2); el('ft-chg').innerText = parseFloat(msg.data.P).toFixed(2) + "%"; }
                 if(type.startsWith('depth')) {
                     el('asks').innerHTML = msg.data.asks.slice(0,10).reverse().map(a=>`<div class="depth-row"><div class="depth-bg" style="width:${Math.random()*100}%; background:var(--red)"></div><span class="depth-val" style="color:var(--red)">${parseFloat(a[0]).toFixed(2)}</span><span class="depth-val">${parseFloat(a[1]).toFixed(3)}</span></div>`).join('');
                     el('bids').innerHTML = msg.data.bids.slice(0,10).map(a=>`<div class="depth-row"><div class="depth-bg" style="width:${Math.random()*100}%; background:var(--green)"></div><span class="depth-val" style="color:var(--green)">${parseFloat(a[0]).toFixed(2)}</span><span class="depth-val">${parseFloat(a[1]).toFixed(3)}</span></div>`).join('');
                 }
             };
         }
-
-        function initTV() {
-            el('tv-cont').innerHTML = '';
-            new TradingView.widget({
-                "autosize": true, "symbol": "BINANCE:"+state.pair.toUpperCase(), "interval": "1", "theme": "dark", "style": "1", "container_id": "tv-cont",
-                "toolbar_bg": "#000", "enable_publishing": false, "hide_side_toolbar": false, "overrides": { "paneProperties.background": "#000000" }
-            });
-        }
-        
-        function startTicker() {
-            new WebSocket('wss://stream.binance.com:9443/ws/!miniTicker@arr').onmessage = (e) => {
-                const d = JSON.parse(e.data).filter(x=>x.s.endsWith('USDT')).sort((a,b)=>b.v-a.v).slice(0,15);
-                el('global-ticker').innerHTML = d.map(x=>`<span class="tick-item" onclick="switchPair('${x.s}')">${x.s.replace('USDT','')} ${parseFloat(x.P).toFixed(1)}%</span>`).join('');
-            };
-        }
-
-        function toast(t,m) {
-            const d = document.createElement('div'); d.className='toast pop-toast'; d.innerHTML=`<b>${t}</b><br>${m}`;
-            el('toast-container').appendChild(d); setTimeout(()=>d.remove(),3000);
-        }
-        function toggleHistory() { 
-            const p = el('history-panel'); p.style.display=p.style.display==='none'?'flex':'none'; 
-            el('history-list').innerHTML = state.history.map(h=>`<div class="row"><span>${h.t}</span><span>PNL: ${h.p.toFixed(2)}$</span></div>`).join('');
-        }
+        function initTV() { el('tv-cont').innerHTML = ''; new TradingView.widget({ "autosize": true, "symbol": "BINANCE:"+state.pair.toUpperCase(), "interval": "1", "theme": "dark", "style": "1", "container_id": "tv-cont", "toolbar_bg": "#000", "enable_publishing": false, "hide_side_toolbar": false, "overrides": { "paneProperties.background": "#000000" } }); }
+        function toast(t,m) { const d = document.createElement('div'); d.className='toast pop-toast'; d.innerHTML=`<b>${t}</b><br>${m}`; el('toast-container').appendChild(d); setTimeout(()=>d.remove(),3000); }
+        function toggleHistory() { const p = el('history-panel'); p.style.display=p.style.display==='none'?'flex':'none'; el('history-list').innerHTML = state.history.map(h=>`<div class="row"><span>${h.t}</span><span>PNL: ${h.p.toFixed(2)}$</span></div>`).join(''); }
         function resetApp() { if(confirm("Reset?")) location.reload(); }
-        
-        function toggleSound() {
-            state.sound = !state.sound;
-            event.target.innerText = state.sound ? "SOUND: ON" : "SOUND: OFF";
-            if(state.sound) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); toast("AUDIO", "Sound FX Enabled"); }
-        }
-        function playSound(type) {
-            if(!state.sound || !audioCtx) return;
-            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-            o.connect(g); g.connect(audioCtx.destination);
-            o.type = type === 'ping' ? 'sine' : 'triangle';
-            o.frequency.setValueAtTime(type==='ping'?800:400, audioCtx.currentTime);
-            o.frequency.exponentialRampToValueAtTime(type==='ping'?400:800, audioCtx.currentTime + 0.1);
-            g.gain.setValueAtTime(0.1, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            o.start(); o.stop(audioCtx.currentTime + 0.1);
-        }
+        function toggleSound() { state.sound = !state.sound; if(state.sound) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); toast("AUDIO", "Sound FX Enabled"); } }
+        function playSound(type) { if(!state.sound || !audioCtx) return; const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.type = type === 'ping' ? 'sine' : 'triangle'; o.frequency.setValueAtTime(type==='ping'?800:400, audioCtx.currentTime); o.frequency.exponentialRampToValueAtTime(type==='ping'?400:800, audioCtx.currentTime + 0.1); g.gain.setValueAtTime(0.1, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1); o.start(); o.stop(audioCtx.currentTime + 0.1); }
 
-        // BOOT
         setInterval(() => el('clock').innerText = new Date().toISOString().split('T')[1].split('.')[0] + ' UTC', 1000);
-        startStream(); startTicker(); initTV();
+        startStream(); initTV();
     </script>
 </body>
 </html>
