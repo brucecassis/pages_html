@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLOOMBERG ENS® - V14 ULTIMATE</title>
+    <title>BLOOMBERG ENS® - V15 ANALYTICS</title>
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
         :root { 
@@ -44,7 +44,7 @@
         .panel { background: var(--panel-bg); display: flex; flex-direction: column; overflow: hidden; position: relative; }
         .title { background: #111; padding: 4px 8px; border-bottom: 1px solid var(--border); color: #888; font-weight: bold; display: flex; justify-content: space-between; font-size: 10px; }
 
-        /* TABS MAIN */
+        /* TABS */
         .tabs-bar { grid-column: span 3; background: #080808; display: flex; align-items: center; border-bottom: 1px solid var(--border); padding: 0 5px; gap: 2px; }
         .pair-badge { background: var(--amber); color: #000; font-weight: 900; font-size: 12px; padding: 2px 8px; margin-right: 10px; border-radius: 2px; }
         .tab-btn { background: #151515; border: 1px solid #333; color: #666; padding: 4px 12px; cursor: pointer; font-size: 10px; transition: all 0.2s; }
@@ -52,48 +52,52 @@
         .tab-btn.active { border-bottom: 2px solid var(--amber); color: var(--amber); background: #111; font-weight: bold; }
         .tab-defi.active { border-color: var(--blue); color: var(--blue); }
 
-        /* TRADING UI (LEFT PANEL) */
-        .trade-panel { padding: 10px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid #333; overflow-y: auto; }
-        .t-input { background: #000; border: 1px solid #444; color: var(--amber); padding: 5px; width: 100%; text-align: right; font-weight: bold; }
-        .btn-trade { width: 100%; padding: 8px; border: none; cursor: pointer; font-weight: 800; color: #000; text-transform: uppercase; }
-        .btn-buy { background: var(--green); } .btn-sell { background: var(--red); }
-        .position-box { background: #111; border-left: 3px solid #666; padding: 8px; display: none; margin-top: 5px; animation: pop-toast 0.2s; }
-        
-        /* LISTS */
-        .list { overflow-y: auto; flex-grow: 1; }
-        .row { display: flex; justify-content: space-between; padding: 2px 8px; font-size: 10px; border-bottom: 1px solid #111; }
-        .row:hover { background: #111; }
-        .depth-row { display: flex; justify-content: space-between; position: relative; padding: 1px 8px; font-size: 10px; }
-        .depth-bg { position: absolute; top: 0; right: 0; bottom: 0; opacity: 0.2; z-index: 0; transition: width 0.1s; }
-        .depth-val { position: relative; z-index: 1; }
-
-        /* DEFI DATA LIST & SUBTABS */
+        /* DEFI UI */
         .sub-nav { display: flex; background: #0a0a0a; border-bottom: 1px solid #222; padding: 5px; gap: 5px; overflow-x: auto; white-space: nowrap; }
         .sub-btn { background: #111; border: 1px solid #333; color: #666; padding: 4px 8px; cursor: pointer; font-size: 9px; flex-shrink: 0; }
-        .sub-btn:hover { color: #fff; background: #222; }
         .sub-btn.active { background: #222; color: var(--blue); border-color: var(--blue); font-weight: bold; }
         
-        .defi-row { display: grid; padding: 6px 10px; border-bottom: 1px solid #1a1a1a; align-items: center; }
-        .defi-row:hover { background: #111; }
-        .defi-head { background: #111; color: #666; font-weight: bold; border-bottom: 1px solid #333; position: sticky; top: 0; }
+        /* FILTERS BAR (New) */
+        .filter-bar { display: none; background: #111; padding: 4px; gap: 4px; border-bottom: 1px solid #222; }
+        .filter-btn { background: #000; border: 1px solid #333; color: #888; padding: 2px 6px; font-size: 9px; cursor: pointer; }
+        .filter-btn:hover { color: #fff; border-color: #555; }
+        .filter-btn.active { background: #222; color: var(--green); border-color: var(--green); }
+
+        .defi-row { display: grid; padding: 6px 10px; border-bottom: 1px solid #1a1a1a; align-items: center; cursor: pointer; transition: background 0.1s; }
+        .defi-row:hover { background: #151515; }
+        .defi-head { background: #111; color: #666; font-weight: bold; border-bottom: 1px solid #333; position: sticky; top: 0; cursor: default; }
         
-        /* Grid Layouts Definitions */
+        /* Grids */
         .grid-tvl     { grid-template-columns: 20px 1fr 80px 60px; }
         .grid-fees    { grid-template-columns: 20px 1fr 70px 70px; }
-        .grid-yield   { grid-template-columns: 1fr 40px 70px 50px 50px; } /* Updated for Real Yield */
+        .grid-yield   { grid-template-columns: 1fr 40px 70px 50px 50px; }
         .grid-stables { grid-template-columns: 1fr 80px 80px 60px; }
         .grid-dex     { grid-template-columns: 20px 1fr 80px 80px; }
         .grid-hacks   { grid-template-columns: 1fr 60px 80px 60px; }
         .grid-bridges { grid-template-columns: 1fr 60px 80px 60px; }
         .grid-chains  { grid-template-columns: 20px 1fr 50px 80px; }
-        .grid-treas   { grid-template-columns: 1fr 1fr 1fr; }
 
-        /* FOOTER */
+        /* MODAL CHART */
+        .modal-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index: 50; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+        .modal-content { background: #080808; border: 1px solid #333; width: 90%; height: 80%; display: flex; flex-direction: column; padding: 10px; box-shadow: 0 0 20px #000; }
+        .chart-svg { width: 100%; height: 100%; }
+        .chart-line { fill: none; stroke: var(--blue); stroke-width: 2; }
+        .chart-area { fill: rgba(41, 98, 255, 0.1); }
+
+        /* FOOTER & TOAST */
         .foot { background: #080808; border-top: 1px solid #333; padding: 4px 10px; color: #666; display: flex; justify-content: space-between; font-size: 10px; align-items: center; height: 30px; }
-        
-        /* TOAST */
         #toast-container { position: absolute; bottom: 40px; right: 20px; width: 250px; display: flex; flex-direction: column; gap: 5px; pointer-events: none; z-index: 100; }
         .toast { background: #111; border: 1px solid var(--amber); color: #fff; padding: 10px; pointer-events: auto; box-shadow: 0 5px 15px #000; }
+        
+        /* Trading UI Utils */
+        .trade-panel { padding: 10px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid #333; overflow-y: auto; }
+        .t-input { background: #000; border: 1px solid #444; color: var(--amber); padding: 5px; width: 100%; text-align: right; font-weight: bold; }
+        .btn-trade { width: 100%; padding: 8px; border: none; cursor: pointer; font-weight: 800; color: #000; text-transform: uppercase; }
+        .btn-buy { background: var(--green); } .btn-sell { background: var(--red); }
+        .position-box { background: #111; border-left: 3px solid #666; padding: 8px; display: none; margin-top: 5px; animation: pop-toast 0.2s; }
+        .depth-row { display: flex; justify-content: space-between; position: relative; padding: 1px 8px; font-size: 10px; }
+        .depth-bg { position: absolute; top: 0; right: 0; bottom: 0; opacity: 0.2; z-index: 0; transition: width 0.1s; }
+        .depth-val { position: relative; z-index: 1; }
     </style>
 </head>
 <body>
@@ -104,7 +108,7 @@
 
     <div class="header">
         <div style="display:flex; gap:15px; align-items:center;">
-            <span style="font-weight:900; color:var(--amber); letter-spacing:1px;">BLOOMBERG ENS® <span style="font-size:9px; color:#666; font-weight:normal;">V14 ULTIMATE</span></span>
+            <span style="font-weight:900; color:var(--amber); letter-spacing:1px;">BLOOMBERG ENS® <span style="font-size:9px; color:#666; font-weight:normal;">V15 ANALYTICS</span></span>
             <div class="search-box">
                 <span style="color:#555">🔍</span>
                 <input type="text" id="symbol-input" placeholder="SEARCH (e.g. SOLUSDT)" onkeypress="if(event.key==='Enter') switchPair(this.value)">
@@ -130,12 +134,10 @@
             <div class="trade-panel">
                 <div style="display:flex; justify-content:space-between; color:#aaa; font-size:10px;"><span>BALANCE</span><span id="wallet-bal" style="color:#fff; font-weight:bold">$10,000.00</span></div>
                 <div style="margin-top:5px;"><span style="font-size:9px; color:#666;">SIZE (USD)</span><input type="number" id="trade-size" class="t-input" value="1000"></div>
-                
                 <div style="display:flex; gap:5px; margin-top:5px;">
                     <button class="btn-trade btn-buy" onclick="openPos('long')">LONG</button>
                     <button class="btn-trade btn-sell" onclick="openPos('short')">SHORT</button>
                 </div>
-                
                 <div id="pos-box" class="position-box">
                     <div style="display:flex; justify-content:space-between; color:#888;">
                         <span id="pos-side" style="font-weight:bold">LONG</span>
@@ -160,23 +162,42 @@
             <div id="defi-view" class="hidden" style="width:100%; height:100%; display:flex; flex-direction:column;">
                 
                 <div class="sub-nav">
-                    <button class="sub-btn active" id="btn-tvl" onclick="loadDefi('tvl')">TVL RANK</button>
+                    <button class="sub-btn active" id="btn-tvl" onclick="loadDefi('tvl')">TVL RANK (CHART)</button>
                     <button class="sub-btn" id="btn-yields" onclick="loadDefi('yields')">REAL YIELD</button>
                     <button class="sub-btn" id="btn-chains" onclick="loadDefi('chains')">CHAIN WARS</button>
                     <button class="sub-btn" id="btn-fees" onclick="loadDefi('fees')">FEES/REV</button>
                     <button class="sub-btn" id="btn-stables" onclick="loadDefi('stables')">STABLECOINS</button>
-                    <button class="sub-btn" id="btn-treas" onclick="loadDefi('treas')">DAO TREASURY</button>
                     <button class="sub-btn" id="btn-dex" onclick="loadDefi('dex')">DEX VOL</button>
                     <button class="sub-btn" id="btn-bridges" onclick="loadDefi('bridges')">BRIDGES</button>
                     <button class="sub-btn" id="btn-hacks" style="color:var(--red); border-color:var(--red)" onclick="loadDefi('hacks')">HACKS</button>
+                </div>
+
+                <div id="yield-filters" class="filter-bar">
+                    <button class="filter-btn active" onclick="filterYields('ALL', this)">ALL</button>
+                    <button class="filter-btn" onclick="filterYields('USDT', this)">USDT</button>
+                    <button class="filter-btn" onclick="filterYields('USDC', this)">USDC</button>
+                    <button class="filter-btn" onclick="filterYields('DAI', this)">DAI</button>
+                    <button class="filter-btn" onclick="filterYields('USDE', this)">USDe</button>
+                    <button class="filter-btn" onclick="filterYields('PYUSD', this)">PYUSD</button>
                 </div>
 
                 <div id="defi-header-row" class="defi-row defi-head grid-tvl"></div>
                 <div id="defi-list" style="overflow-y:auto; flex:1;">
                     <div style="padding:20px; text-align:center; color:#666;">SELECT DATA TYPE</div>
                 </div>
-            </div>
 
+                <div id="mini-chart-modal" class="modal-overlay hidden">
+                    <div class="modal-content">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                            <span id="chart-title" style="font-weight:bold; color:#fff">PROTOCOL HISTORY</span>
+                            <button onclick="closeChart()" style="background:none; border:none; color:#aaa; cursor:pointer;">X</button>
+                        </div>
+                        <div id="chart-container" style="flex:1; position:relative; background:#111; border:1px solid #222;">
+                            </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
 
         <div class="panel">
@@ -191,7 +212,6 @@
                 <div style="margin-top:5px; color:var(--amber)">● BINANCE (Trade/Orderbook)</div>
                 <div style="margin-top:2px; color:var(--blue)">● DEFILLAMA API (Aggregated)</div>
                 <div style="margin-top:2px; color:var(--green)">● YIELDS.LLAMA (Pools)</div>
-                <div style="margin-top:2px; color:var(--liq)">● STABLECOINS.LLAMA (Peg)</div>
                 <div style="margin-top:10px; border-top:1px solid #333; padding-top:5px;">NO SIMULATED DATA ALLOWED.</div>
             </div>
         </div>
@@ -217,6 +237,7 @@
     <script>
         // --- CORE & STATE ---
         let state = { pair: 'btcusdt', wallet: 10000, pos: null, history: [], sound: false };
+        let yieldCache = []; // Store yield data for filtering
         const el = id => document.getElementById(id);
         let ws = null, audioCtx = null;
 
@@ -259,16 +280,20 @@
         async function loadDefi(mode) {
             const list = el('defi-list');
             const head = el('defi-header-row');
+            const filters = el('yield-filters');
             
+            // UI Reset
             document.querySelectorAll('.sub-btn').forEach(b => b.classList.remove('active'));
             const btn = el('btn-'+mode);
             if(btn) btn.classList.add('active');
+            
+            // Show/Hide Filters
+            filters.style.display = (mode === 'yields') ? 'flex' : 'none';
 
             list.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">FETCHING LIVE DATA...</div>';
             
             try {
                 let html = '';
-
                 switch(mode) {
                     case 'tvl':
                         head.className = 'defi-row defi-head grid-tvl';
@@ -278,8 +303,21 @@
                         dataTvl.sort((a,b) => (b.tvl||0) - (a.tvl||0));
                         dataTvl.slice(0, 50).forEach((p, i) => {
                             const chg = p.change_1d || 0;
-                            html += `<div class="defi-row grid-tvl"><span style="color:#444">${i+1}</span><span style="font-weight:bold; color:#fff">${p.name} <span style="font-size:9px; color:#666">(${p.symbol})</span></span><span style="text-align:right; color:var(--blue); font-family:monospace;">$${fmt(p.tvl)}</span><span style="text-align:right; color:${chg>=0?'var(--green)':'var(--red)'}">${chg.toFixed(2)}%</span></div>`;
+                            // Added onclick for chart
+                            html += `<div class="defi-row grid-tvl" onclick="openChart('${p.slug}', '${p.name}')"><span style="color:#444">${i+1}</span><span style="font-weight:bold; color:#fff">${p.name} <span style="font-size:9px; color:#666">(${p.symbol})</span></span><span style="text-align:right; color:var(--blue); font-family:monospace;">$${fmt(p.tvl)}</span><span style="text-align:right; color:${chg>=0?'var(--green)':'var(--red)'}">${chg.toFixed(2)}%</span></div>`;
                         });
+                        list.innerHTML = html;
+                        toast("INFO", "Click rows for TVL History");
+                        break;
+
+                    case 'yields':
+                        head.className = 'defi-row defi-head grid-yield';
+                        head.innerHTML = `<span>POOL</span><span style="text-align:right">CHAIN</span><span style="text-align:right">TVL</span><span style="text-align:right">BASE</span><span style="text-align:right">RWD</span>`;
+                        const resYield = await fetch('https://yields.llama.fi/pools');
+                        const wYield = await resYield.json();
+                        // Cache for filtering
+                        yieldCache = wYield.data.filter(p => p.tvlUsd > 1000000 && p.apy > 0).sort((a,b) => b.apy - a.apy);
+                        renderYields('ALL'); // Default
                         break;
 
                     case 'chains':
@@ -291,52 +329,7 @@
                         dataChain.slice(0, 30).forEach((p, i) => {
                             html += `<div class="defi-row grid-chains"><span style="color:#444">${i+1}</span><span style="font-weight:bold; color:#fff">${p.name}</span><span style="color:#aaa; font-size:9px;">${p.tokenSymbol||'-'}</span><span style="text-align:right; color:var(--blue); font-family:monospace;">$${fmt(p.tvl)}</span></div>`;
                         });
-                        break;
-
-                    case 'treas':
-                        head.className = 'defi-row defi-head grid-treas';
-                        head.innerHTML = `<span>DAO / PROTOCOL</span><span style="text-align:right">TREASURY</span><span style="text-align:right">USD VALUE</span>`;
-                        // Attempting to fetch treasuries. If endpoint is restrictive, we catch error.
-                        const resTreas = await fetch('https://api.llama.fi/protocols'); 
-                        const dataTreas = await resTreas.json();
-                        // Filter protocols that have treasury info (implied by API availability or specific flag if standard endpoint fails)
-                        // Actually, 'treasuries' endpoint is separate. Let's try direct one or fallback.
-                        // Since I promised NO SIMULATION, if I can't find a direct free treasuries list, I will show error.
-                        // However, some major protocols have 'treasury' field in /protocols? No. 
-                        // Let's try the list from DefiLlama 'treasuries' page logic if possible.
-                        // Fallback: We use the general protocols list but we can't guess treasury.
-                        // RETRY: Using a known public endpoint if exists. 
-                        // If this fails, the catch block will show "Fetch Failed" which is honest.
-                        // I will try to fetch a known list or handle it.
-                        // For V14, I will use a placeholder message if I can't verify the endpoint to avoid breaking the app.
-                        // BUT, I'll try the common endpoint:
-                        try {
-                            const rt = await fetch('https://api.llama.fi/treasury'); // Common guess
-                            if(!rt.ok) throw new Error("No public treasury endpoint found");
-                            // If it worked, parse... but it likely won't.
-                        } catch(err) {
-                            html = `<div style="padding:20px; text-align:center; color:var(--red);">ENDPOINT RESTRICTED<br><span style="font-size:9px; color:#666">DefiLlama Treasuries API requires Pro Key.</span></div>`;
-                        }
-                        break;
-
-                    case 'yields': // UPDATED: REAL YIELD
-                        head.className = 'defi-row defi-head grid-yield';
-                        head.innerHTML = `<span>POOL</span><span style="text-align:right">CHAIN</span><span style="text-align:right">TVL</span><span style="text-align:right">BASE</span><span style="text-align:right">RWD</span>`;
-                        const resYield = await fetch('https://yields.llama.fi/pools');
-                        const wYield = await resYield.json();
-                        // Filter for high TVL to avoid junk
-                        let dYield = wYield.data.filter(p => p.tvlUsd > 1000000 && p.apy > 0).sort((a,b) => b.apy - a.apy);
-                        dYield.slice(0, 100).forEach(p => {
-                            const base = p.apyBase !== null ? p.apyBase : p.apy; // Fallback if no breakdown
-                            const reward = p.apyReward !== null ? p.apyReward : 0;
-                            html += `<div class="defi-row grid-yield">
-                                <span style="font-weight:bold; color:#fff; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">${p.project.toUpperCase()} <span style="color:#666; font-weight:normal">${p.symbol}</span></span>
-                                <span style="text-align:right; font-size:9px; color:#aaa">${p.chain}</span>
-                                <span style="text-align:right; font-family:monospace; color:#666">$${fmt(p.tvlUsd)}</span>
-                                <span style="text-align:right; color:var(--amber); font-weight:bold;">${base.toFixed(2)}%</span>
-                                <span style="text-align:right; color:var(--purple); font-weight:bold;">${reward.toFixed(2)}%</span>
-                            </div>`;
-                        });
+                        list.innerHTML = html;
                         break;
 
                     case 'fees':
@@ -348,6 +341,7 @@
                         dataFees.protocols.slice(0, 50).forEach((p, i) => {
                             html += `<div class="defi-row grid-fees"><span style="color:#444">${i+1}</span><span style="font-weight:bold; color:#fff">${p.name}</span><span style="text-align:right; color:var(--green); font-family:monospace;">$${fmt(p.total24h)}</span><span style="text-align:right; color:#888; font-family:monospace;">$${fmt(p.total7d)}</span></div>`;
                         });
+                        list.innerHTML = html;
                         break;
 
                     case 'stables':
@@ -361,6 +355,7 @@
                             const isDepeg = price < 0.99 || price > 1.01;
                             html += `<div class="defi-row grid-stables"><span style="font-weight:bold; color:#fff">${p.name} <span style="font-size:9px; color:#666">(${p.symbol})</span></span><span style="text-align:right; color:${isDepeg?'var(--red)':'var(--liq)'}; font-weight:bold;">$${price.toFixed(4)}</span><span style="text-align:right; font-family:monospace; color:#888">$${fmt(p.circulating?.peggedUSD)}</span><span style="text-align:right; font-size:9px; color:#555">${p.pegMechanism}</span></div>`;
                         });
+                        list.innerHTML = html;
                         break;
                     
                     case 'dex':
@@ -372,6 +367,7 @@
                         wDex.protocols.slice(0,50).forEach((p,i) => {
                             html += `<div class="defi-row grid-dex"><span style="color:#444">${i+1}</span><span style="font-weight:bold; color:#fff">${p.name}</span><span style="text-align:right; color:var(--purple); font-family:monospace;">$${fmt(p.total24h)}</span><span style="text-align:right; color:#666; font-family:monospace;">$${fmt(p.total7d)}</span></div>`;
                         });
+                        list.innerHTML = html;
                         break;
 
                     case 'bridges':
@@ -383,6 +379,7 @@
                         dBri.forEach(p => {
                             html += `<div class="defi-row grid-bridges"><span style="font-weight:bold; color:#fff">${p.displayName}</span><span style="text-align:right; font-size:9px; color:#aaa">${p.chains.length}</span><span style="text-align:right; color:var(--liq); font-family:monospace;">$${fmt(p.volume24h)}</span><span style="text-align:right; color:#666; font-family:monospace;">$${fmt(p.volume7d)}</span></div>`;
                         });
+                        list.innerHTML = html;
                         break;
 
                     case 'hacks':
@@ -394,22 +391,110 @@
                         wHack.slice(0, 100).forEach(p => {
                             html += `<div class="defi-row grid-hacks"><span style="font-weight:bold; color:#fff; overflow:hidden; text-overflow:ellipsis;">${p.name} <span style="font-size:9px; color:#666">(${p.classification})</span></span><span style="text-align:right; font-size:9px; color:#aaa">${p.chain}</span><span style="text-align:right; color:var(--red); font-family:monospace;">$${fmt(p.amount)}</span><span style="text-align:right; font-size:9px; color:#666">${new Date(p.date*1000).toLocaleDateString()}</span></div>`;
                         });
+                        list.innerHTML = html;
                         break;
                 }
-
-                if(mode !== 'treas') list.innerHTML = html;
-                else list.innerHTML = html || `<div style="padding:20px; text-align:center; color:var(--red);">DATA LOCKED<br><span style="font-size:9px; color:#666">Requires API Key.</span></div>`; // Specific fallback for Treasuries if empty
-
-                toast("API", "Data Updated");
-
+                toast("API", "Data Loaded");
             } catch (e) {
                 console.error(e);
-                list.innerHTML = `<div style="padding:20px; text-align:center; color:var(--red);">
-                    ERROR FETCHING DATA<br>
-                    <span style="font-size:9px; color:#666">Endpoint may be restricted or down.</span>
-                </div>`;
+                list.innerHTML = `<div style="padding:20px; text-align:center; color:var(--red);">ERROR FETCHING DATA</div>`;
                 toast("ERR", "Fetch Failed");
             }
+        }
+
+        // --- FILTER LOGIC (Stablecoins) ---
+        function filterYields(token, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderYields(token);
+        }
+
+        function renderYields(filter) {
+            const list = el('defi-list');
+            let data = yieldCache;
+
+            if (filter !== 'ALL') {
+                data = data.filter(p => p.symbol.toUpperCase().includes(filter));
+            }
+
+            let html = '';
+            data.slice(0, 100).forEach(p => {
+                const base = p.apyBase !== null ? p.apyBase : p.apy;
+                const reward = p.apyReward !== null ? p.apyReward : 0;
+                html += `<div class="defi-row grid-yield">
+                    <span style="font-weight:bold; color:#fff; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">${p.project.toUpperCase()} <span style="color:#666; font-weight:normal">${p.symbol}</span></span>
+                    <span style="text-align:right; font-size:9px; color:#aaa">${p.chain}</span>
+                    <span style="text-align:right; font-family:monospace; color:#666">$${fmt(p.tvlUsd)}</span>
+                    <span style="text-align:right; color:var(--amber); font-weight:bold;">${base.toFixed(2)}%</span>
+                    <span style="text-align:right; color:var(--purple); font-weight:bold;">${reward.toFixed(2)}%</span>
+                </div>`;
+            });
+            
+            if(data.length === 0) html = '<div style="padding:20px; text-align:center; color:#555">NO POOLS FOUND FOR THIS TOKEN</div>';
+            list.innerHTML = html;
+        }
+
+        // --- CHART LOGIC (SVG) ---
+        async function openChart(slug, name) {
+            const modal = el('mini-chart-modal');
+            const cont = el('chart-container');
+            el('chart-title').innerText = name.toUpperCase() + " : TVL HISTORY";
+            modal.classList.remove('hidden');
+            cont.innerHTML = '<div style="color:#666; text-align:center; padding-top:50px;">LOADING HISTORY...</div>';
+
+            try {
+                // Fetch Historical TVL
+                const res = await fetch(`https://api.llama.fi/protocol/${slug}`);
+                if(!res.ok) throw new Error("Data not available");
+                const data = await res.json();
+                
+                // Extract TVL array
+                let points = data.tvl || [];
+                if(points.length < 2) throw new Error("Not enough data");
+
+                // Prepare SVG Data
+                // Downsample if too many points for svg perf
+                if(points.length > 300) {
+                    points = points.filter((_, i) => i % Math.ceil(points.length/300) === 0);
+                }
+
+                // Find Min/Max
+                let minTvl = Infinity, maxTvl = -Infinity;
+                points.forEach(p => {
+                    if(p.totalLiquidityUSD < minTvl) minTvl = p.totalLiquidityUSD;
+                    if(p.totalLiquidityUSD > maxTvl) maxTvl = p.totalLiquidityUSD;
+                });
+                
+                // Dimensions
+                const w = cont.clientWidth || 600;
+                const h = cont.clientHeight || 300;
+                const padding = 10;
+
+                // Create Path
+                let pathD = `M 0 ${h} `; // Start bottom left
+                points.forEach((p, i) => {
+                    const x = (i / (points.length - 1)) * w;
+                    const y = h - ((p.totalLiquidityUSD - minTvl) / (maxTvl - minTvl)) * (h - padding*2) - padding;
+                    pathD += `L ${x} ${y} `;
+                });
+
+                // Generate SVG HTML
+                cont.innerHTML = `
+                    <svg class="chart-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+                        <path d="${pathD}" class="chart-line" />
+                    </svg>
+                    <div style="position:absolute; top:5px; left:5px; font-size:10px; color:#fff;">Max: $${fmt(maxTvl)}</div>
+                    <div style="position:absolute; bottom:5px; left:5px; font-size:10px; color:#666;">Min: $${fmt(minTvl)}</div>
+                `;
+
+            } catch(e) {
+                console.error(e);
+                cont.innerHTML = '<div style="color:var(--red); text-align:center; padding-top:50px;">DATA UNAVAILABLE</div>';
+            }
+        }
+
+        function closeChart() {
+            el('mini-chart-modal').classList.add('hidden');
         }
 
         // --- 3. UI TABS ---
@@ -457,14 +542,11 @@
                         if(tape.children.length > 30) tape.lastChild.remove();
                     }
                 }
-                
                 if(type === 'ticker') {
                     el('ft-price').innerText = parseFloat(msg.data.c).toFixed(2);
                     el('ft-chg').innerText = parseFloat(msg.data.P).toFixed(2) + "%";
                 }
-                
                 if(type.startsWith('depth')) {
-                    // Random visual width (as requested)
                     el('asks').innerHTML = msg.data.asks.slice(0,10).reverse().map(a=>`<div class="depth-row"><div class="depth-bg" style="width:${Math.random()*100}%; background:var(--red)"></div><span class="depth-val" style="color:var(--red)">${parseFloat(a[0]).toFixed(2)}</span><span class="depth-val">${parseFloat(a[1]).toFixed(3)}</span></div>`).join('');
                     el('bids').innerHTML = msg.data.bids.slice(0,10).map(a=>`<div class="depth-row"><div class="depth-bg" style="width:${Math.random()*100}%; background:var(--green)"></div><span class="depth-val" style="color:var(--green)">${parseFloat(a[0]).toFixed(2)}</span><span class="depth-val">${parseFloat(a[1]).toFixed(3)}</span></div>`).join('');
                 }
