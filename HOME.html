@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLOOMBERG ENS® - REAL DATA ONLY</title>
+    <title>BLOOMBERG ENS® - ULTIMATE DATA</title>
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
         :root { 
@@ -43,7 +43,7 @@
         .panel { background: var(--panel-bg); display: flex; flex-direction: column; overflow: hidden; position: relative; }
         .title { background: #111; padding: 4px 8px; border-bottom: 1px solid var(--border); color: #888; font-weight: bold; display: flex; justify-content: space-between; font-size: 10px; }
 
-        /* TABS */
+        /* TABS MAIN */
         .tabs-bar { grid-column: span 3; background: #080808; display: flex; align-items: center; border-bottom: 1px solid var(--border); padding: 0 5px; gap: 2px; }
         .pair-badge { background: var(--amber); color: #000; font-weight: 900; font-size: 12px; padding: 2px 8px; margin-right: 10px; border-radius: 2px; }
         .tab-btn { background: #151515; border: 1px solid #333; color: #666; padding: 4px 12px; cursor: pointer; font-size: 10px; transition: all 0.2s; }
@@ -66,10 +66,19 @@
         .depth-bg { position: absolute; top: 0; right: 0; bottom: 0; opacity: 0.2; z-index: 0; transition: width 0.1s; }
         .depth-val { position: relative; z-index: 1; }
 
-        /* DEFI DATA LIST */
-        .defi-row { display: grid; grid-template-columns: 20px 1fr 80px 60px; padding: 6px 10px; border-bottom: 1px solid #1a1a1a; align-items: center; }
+        /* DEFI DATA LIST & SUBTABS */
+        .sub-nav { display: flex; background: #0a0a0a; border-bottom: 1px solid #222; padding: 5px; gap: 5px; }
+        .sub-btn { background: #111; border: 1px solid #333; color: #666; padding: 2px 8px; cursor: pointer; font-size: 9px; }
+        .sub-btn.active { background: #222; color: #fff; border-color: #555; }
+        
+        .defi-row { display: grid; padding: 6px 10px; border-bottom: 1px solid #1a1a1a; align-items: center; }
         .defi-row:hover { background: #111; }
-        .defi-head { background: #111; color: #666; font-weight: bold; border-bottom: 1px solid #333; padding: 6px 10px; }
+        .defi-head { background: #111; color: #666; font-weight: bold; border-bottom: 1px solid #333; }
+        
+        /* Specific Grid Layouts for Defi Views */
+        .grid-tvl { grid-template-columns: 20px 1fr 80px 60px; }
+        .grid-fees { grid-template-columns: 20px 1fr 70px 70px; }
+        .grid-yield { grid-template-columns: 1fr 60px 80px 60px; }
 
         /* FOOTER */
         .foot { background: #080808; border-top: 1px solid #333; padding: 4px 10px; color: #666; display: flex; justify-content: space-between; font-size: 10px; align-items: center; height: 30px; }
@@ -87,7 +96,7 @@
 
     <div class="header">
         <div style="display:flex; gap:15px; align-items:center;">
-            <span style="font-weight:900; color:var(--amber); letter-spacing:1px;">BLOOMBERG ENS® <span style="font-size:9px; color:#666; font-weight:normal;">REAL DATA</span></span>
+            <span style="font-weight:900; color:var(--amber); letter-spacing:1px;">BLOOMBERG ENS® <span style="font-size:9px; color:#666; font-weight:normal;">ULTIMATE DATA</span></span>
             <div class="search-box">
                 <span style="color:#555">🔍</span>
                 <input type="text" id="symbol-input" placeholder="SEARCH (e.g. SOLUSDT)" onkeypress="if(event.key==='Enter') switchPair(this.value)">
@@ -140,19 +149,19 @@
             
             <div id="tv-cont" style="width:100%; height:100%;"></div>
 
-            <div id="defi-view" class="hidden" style="width:100%; height:100%; overflow-y:auto; background:var(--panel-bg);">
-                <div class="title" style="position:sticky; top:0; z-index:10;">
-                    <span>DEFILLAMA API: PROTOCOLS BY TVL</span>
-                    <button onclick="initDefi()" style="background:none; border:1px solid #333; color:#aaa; cursor:pointer; font-size:9px; padding:2px 5px;">REFRESH</button>
+            <div id="defi-view" class="hidden" style="width:100%; height:100%; display:flex; flex-direction:column;">
+                
+                <div class="sub-nav">
+                    <button class="sub-btn active" id="btn-tvl" onclick="loadDefi('tvl')">TVL RANKING</button>
+                    <button class="sub-btn" id="btn-fees" onclick="loadDefi('fees')">FEES (REVENUE)</button>
+                    <button class="sub-btn" id="btn-yields" onclick="loadDefi('yields')">STABLECOIN YIELDS</button>
                 </div>
-                <div class="defi-row defi-head">
-                    <span>#</span>
-                    <span>PROTOCOL</span>
-                    <span style="text-align:right;">TVL</span>
-                    <span style="text-align:right;">24H</span>
-                </div>
-                <div id="defi-list">
-                    <div style="padding:20px; text-align:center; color:#666;">LOADING REAL DATA...</div>
+
+                <div id="defi-header-row" class="defi-row defi-head grid-tvl">
+                    </div>
+
+                <div id="defi-list" style="overflow-y:auto; flex:1;">
+                    <div style="padding:20px; text-align:center; color:#666;">SELECT DATA TYPE</div>
                 </div>
             </div>
 
@@ -166,9 +175,10 @@
         <div class="panel">
             <div class="title"><span>SYSTEM</span><span>STATUS</span></div>
             <div class="list" style="padding:10px; color:#666;">
-                <p>DATA SOURCES:</p>
-                <p style="color:var(--amber)">● BINANCE (WSS)</p>
-                <p style="color:var(--blue)">● DEFILLAMA (API)</p>
+                <p>DATA SOURCES (REALTIME):</p>
+                <p style="color:var(--amber)">● BINANCE (Trade Feed)</p>
+                <p style="color:var(--blue)">● DEFILLAMA (TVL & Fees)</p>
+                <p style="color:var(--green)">● LLAMA YIELDS (Stablecoins)</p>
             </div>
         </div>
     </div>
@@ -223,50 +233,115 @@
         }
         function updateWallet() { el('wallet-bal').innerText = "$" + state.wallet.toLocaleString(undefined, {minimumFractionDigits:2}); }
 
-        // --- 2. DEFILLAMA REAL DATA API ---
-        async function initDefi() {
+        // --- 2. DEFI REAL DATA LOGIC ---
+        
+        // Helper to format large numbers
+        const fmt = (n) => {
+            if(!n) return '-';
+            if(n > 1e9) return (n/1e9).toFixed(2) + 'B';
+            if(n > 1e6) return (n/1e6).toFixed(2) + 'M';
+            if(n > 1e3) return (n/1e3).toFixed(2) + 'K';
+            return n.toFixed(0);
+        };
+
+        async function loadDefi(mode) {
             const list = el('defi-list');
-            list.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">FETCHING DEFILLAMA API...</div>';
+            const head = el('defi-header-row');
+            
+            // Update buttons
+            document.querySelectorAll('.sub-btn').forEach(b => b.classList.remove('active'));
+            el('btn-'+mode).classList.add('active');
+
+            list.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">FETCHING LIVE DATA...</div>';
             
             try {
-                // Fetch top protocols by TVL
-                const response = await fetch('https://api.llama.fi/protocols');
-                if (!response.ok) throw new Error("API Error");
-                
-                let data = await response.json();
-                
-                // Sort by TVL desc and take top 50
-                data.sort((a, b) => (b.tvl || 0) - (a.tvl || 0));
-                data = data.slice(0, 50);
+                if(mode === 'tvl') {
+                    // --- TVL DATA ---
+                    head.className = 'defi-row defi-head grid-tvl';
+                    head.innerHTML = `<span>#</span><span>PROTOCOL</span><span style="text-align:right;">TVL</span><span style="text-align:right;">24H</span>`;
 
-                let html = '';
-                data.forEach((p, index) => {
-                    const tvlVal = p.tvl > 1e9 
-                        ? (p.tvl/1e9).toFixed(2) + 'B' 
-                        : (p.tvl/1e6).toFixed(2) + 'M';
+                    const res = await fetch('https://api.llama.fi/protocols');
+                    let data = await res.json();
+                    data.sort((a,b) => (b.tvl||0) - (a.tvl||0));
                     
-                    const change = p.change_1d || 0;
-                    const color = change >= 0 ? 'var(--green)' : 'var(--red)';
-                    const plus = change >= 0 ? '+' : '';
+                    let html = '';
+                    data.slice(0, 50).forEach((p, i) => {
+                        const chg = p.change_1d || 0;
+                        const col = chg >= 0 ? 'var(--green)' : 'var(--red)';
+                        html += `
+                        <div class="defi-row grid-tvl">
+                            <span style="color:#444">${i+1}</span>
+                            <span style="font-weight:bold; color:#fff">${p.name} <span style="font-size:9px; color:#666">(${p.symbol})</span></span>
+                            <span style="text-align:right; color:var(--blue); font-family:monospace;">$${fmt(p.tvl)}</span>
+                            <span style="text-align:right; color:${col}">${chg.toFixed(2)}%</span>
+                        </div>`;
+                    });
+                    list.innerHTML = html;
 
-                    html += `
-                    <div class="defi-row">
-                        <span style="color:#444">${index + 1}</span>
-                        <span style="font-weight:bold; color:#fff">${p.name} <span style="font-size:9px; color:#666">(${p.symbol})</span></span>
-                        <span style="text-align:right; color:var(--blue); font-family:monospace;">$${tvlVal}</span>
-                        <span style="text-align:right; color:${color};">${plus}${change.toFixed(2)}%</span>
-                    </div>`;
-                });
-                list.innerHTML = html;
-                toast("API", "DefiLlama Data Updated");
+                } else if(mode === 'fees') {
+                    // --- FEES / REVENUE DATA ---
+                    head.className = 'defi-row defi-head grid-fees';
+                    head.innerHTML = `<span>#</span><span>PROTOCOL</span><span style="text-align:right;">FEES 24H</span><span style="text-align:right;">FEES 7D</span>`;
+
+                    // Using the fees overview endpoint (Real data)
+                    const res = await fetch('https://api.llama.fi/overview/fees?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true&dataType=dailyFees');
+                    const data = await res.json();
+                    
+                    if(!data.protocols) throw new Error("No data");
+                    
+                    // Sort by 24h fees
+                    data.protocols.sort((a,b) => (b.total24h||0) - (a.total24h||0));
+                    
+                    let html = '';
+                    data.protocols.slice(0, 50).forEach((p, i) => {
+                        html += `
+                        <div class="defi-row grid-fees">
+                            <span style="color:#444">${i+1}</span>
+                            <span style="font-weight:bold; color:#fff">${p.name}</span>
+                            <span style="text-align:right; color:var(--green); font-family:monospace;">$${fmt(p.total24h)}</span>
+                            <span style="text-align:right; color:#888; font-family:monospace;">$${fmt(p.total7d)}</span>
+                        </div>`;
+                    });
+                    list.innerHTML = html;
+
+                } else if(mode === 'yields') {
+                    // --- STABLECOIN YIELDS ---
+                    head.className = 'defi-row defi-head grid-yield';
+                    head.innerHTML = `<span>PROJECT / POOL</span><span style="text-align:right">CHAIN</span><span style="text-align:right">TVL</span><span style="text-align:right">APY</span>`;
+
+                    const res = await fetch('https://yields.llama.fi/pools');
+                    const wrapper = await res.json();
+                    let data = wrapper.data;
+                    
+                    // Filter: Stablecoins only, TVL > 1M (to avoid scams), APY > 0
+                    data = data.filter(p => p.stablecoin === true && p.tvlUsd > 1000000 && p.apy > 0);
+                    
+                    // Sort by APY desc
+                    data.sort((a,b) => b.apy - a.apy);
+
+                    let html = '';
+                    data.slice(0, 50).forEach(p => {
+                        html += `
+                        <div class="defi-row grid-yield">
+                            <span style="font-weight:bold; color:#fff; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">
+                                ${p.project.toUpperCase()} <span style="color:#666; font-weight:normal">${p.symbol}</span>
+                            </span>
+                            <span style="text-align:right; font-size:9px; color:#aaa">${p.chain}</span>
+                            <span style="text-align:right; font-family:monospace; color:#666">$${fmt(p.tvlUsd)}</span>
+                            <span style="text-align:right; color:var(--green); font-weight:bold;">${p.apy.toFixed(2)}%</span>
+                        </div>`;
+                    });
+                    list.innerHTML = html;
+                }
+                toast("API", "Data Loaded Successfully");
 
             } catch (e) {
                 console.error(e);
                 list.innerHTML = `<div style="padding:20px; text-align:center; color:var(--red);">
                     ERROR FETCHING DATA<br>
-                    <span style="font-size:9px; color:#666">Maybe CORS policy or API down.</span>
+                    <span style="font-size:9px; color:#666">API may be down or rate limited.</span>
                 </div>`;
-                toast("ERR", "DefiLlama Fetch Failed");
+                toast("ERR", "Fetch Failed");
             }
         }
 
@@ -274,6 +349,7 @@
         function setTab(t, btn) {
             el('tv-cont').classList.add('hidden');
             el('defi-view').classList.add('hidden');
+            el('defi-view').style.display = 'none'; // Ensure display flex reset
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             
@@ -282,8 +358,9 @@
             }
             if(t === 'defi') {
                 el('defi-view').classList.remove('hidden');
-                // Trigger fetch if empty
-                if(el('defi-list').innerText.includes('LOADING')) initDefi();
+                el('defi-view').style.display = 'flex';
+                // Load default TVL if empty
+                if(el('defi-list').innerText.includes('SELECT')) loadDefi('tvl');
             }
         }
 
